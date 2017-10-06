@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>主机详细</title>
+    <link rel="stylesheet" href="http://cdn.static.runoob.com/libs/bootstrap/3.3.7/css/bootstrap.min.css">
+    <script src="http://cdn.static.runoob.com/libs/jquery/2.1.1/jquery.min.js"></script>
+    <script src="http://cdn.static.runoob.com/libs/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+</head>
+<body>
+<table class="table table-striped table-bordered">
+    <thead class="text-primary">
+    <tr>
+        <td>hostname</td>
+        <td>inventory</td>
+        <td>memory</td>
+    </tr>
+    </thead>
+    <tbody>
+    <tr>
+        <td>{{ system_detail_in.hostname }}</td>
+        <td>{{ system_detail_in.inventory }}</td>
+        <td>{{ system_detail_in.memory }}</td>
+    </tr>
+    </tbody>
+</table>
+<br/>
+<div class="panel panel-default">
+    <div class="panel-heading"><b>WebSphere Info</b></div>
+    <table class="table table-striped table-bordered">
+        <thead class="text-primary">
+        <tr>
+            <td><b>#</b></td>
+            <td>profile name</td>
+            <td>server name</td>
+            <td>max memory(MB)</td>
+            <td>current memory(MB)</td>
+            <td>memory percent(%)</td>
+        </tr>
+        </thead>
+        <tbody>
+        {% for one_was in was_detail_in %}
+        {% set mem_per = (one_was.curr_mem*100/one_was.max_mem) | round(2,'common') %}
+        {% if mem_per > 90 %}
+        <tr class="text-danger">
+            {% else %}
+        <tr>
+            {% endif %}
+            <td>{{ one_was.was_info_id }}</td>
+            <td>{{ one_was.prf_name }}</td>
+            <td>{{ one_was.srv_name }}</td>
+            <td>{{ one_was.max_mem }}</td>
+            <td>{{ one_was.curr_mem }}</td>
+            <td>{{ mem_per }}</td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+<div class="panel panel-default">
+    <div class="panel-heading"><b>DB2 Info</b></div>
+    <table class="table table-striped table-bordered">
+        <thead class="text-primary">
+        <tr>
+            <td><b>#</b></td>
+            <td>instance name</td>
+            <td>database name</td>
+            <td>listen port</td>
+        </tr>
+        </thead>
+        <tbody>
+        {% for one_db2 in db2_detail_in %}
+        <tr>
+            <td>{{ one_db2.db2_info_id }}</td>
+            <td>{{ one_db2.inst_name }}</td>
+            <td>{{ one_db2.db_name }}</td>
+            <td>{{ one_db2.listen_port }}</td>
+        </tr>
+        {% endfor %}
+        </tbody>
+
+    </table>
+
+</div>
+</body>
+</html>

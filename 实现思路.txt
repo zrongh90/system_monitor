@@ -1,0 +1,6 @@
+1.初步通过ansible-playbook来收集系统信息（新增was信息/db2信息）
+2.was信息收集思路：通过ps获取was信息，使用awk将结果分行，提取出（最大内存/当前内存占用率/概要文件profile名称/服务server名称）
+3.db2信息收集思路：db2sys进程信息，结合用户信息/etc/passwd和/etc/services确定数据库的实例用户/数据库名/监听端口
+4.考虑是否结合端口扫描确定各应用占用端口
+
+jquery序列化问题，未解决

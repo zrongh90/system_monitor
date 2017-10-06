@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>主机信息列表</title>
+    <link rel="stylesheet" href="http://cdn.static.runoob.com/libs/bootstrap/3.3.7/css/bootstrap.min.css">
+    <script src="http://cdn.static.runoob.com/libs/jquery/2.1.1/jquery.min.js"></script>
+    <script src="http://cdn.static.runoob.com/libs/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+    {%import '_macro.html' as macros%}
+</head>
+<body>
+<div class="container">
+{%if pagination%}
+{{ macros.render_pagination(pagination,'get_all_system') }}
+{%endif%}
+</div>
+<div class="container">
+    <table class="table">
+        <thead>
+        <tr>
+            <th>inventory</th>
+            <th>hostname</th>
+            <th>os_info</th>
+            <th>platform</th>
+            <th>cpu</th>
+            <th>component</th>
+            <th>swap</th>
+            <th>all_ip_list</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for x in system_list %}
+        <tr>
+            <td><a href="{{ url_for('detail',inventory=x.inventory) }}">{{ x.inventory }}</a></td>
+            <td>{{ x.hostname }}</td>
+            <td>{{ x.os_info }}</td>
+            <td>{{ x.platform }}</td>
+            <td>{{ x.cpu_num }}</td>
+            <td>
+                <div title="标题" data-toggle="popover"
+                     data-placement="top" class="inventory_for_was"
+                     data-content="内容" value="{{ x.inventory }}">
+                    {% if sys_was_count_list[loop.index0] > 0 %}
+                    {{ sys_was_count_list[loop.index0] }} was
+                    {% endif %}
+                </div>
+                <div class="inventory_for_db2" value="{{ x.inventory }}">
+                    {% if sys_db2_count_list[loop.index0] > 0 %}
+                    {{ sys_db2_count_list[loop.index0] }} db2
+                    {% endif %}
+                </div>
+            </td>
+            <td>{{ x[6] }}</td>
+            <td>{{ x[7] }}</td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+</body>
+<script type=text/javascript>
+ $SCRIPT_ROOT = {{ request.script_root|tojson|safe }};
+
+  $(function() {
+    $('.inventory_for_was').bind('click', function() {
+      $.getJSON($SCRIPT_ROOT + '/_get_was', {
+        invent_val: $(this).attr("value"),
+      }, function(data) {
+        pop_inventory = ''
+        $.each(data.result, function(i, item){
+            pop_inventory = item.sys_inventory
+            <!--console.log(item.prf_name);-->
+            <!--console.log(item.srv_name);-->
+            <!--console.log(item.sys_inventory);-->
+            <!--$("[value='"+pop_inventory+"']").attr("data-content",item.prf_name)-->
+            <!--console.log($("[value='"+pop_inventory+"']").attr("data-content"))-->
+         });
+         <!--alert($("[value='"+pop_inventory+"']").attr("data-content"))-->
+         <!--$("[value='"+pop_inventory+"']").popover();-->
+      });
+      return false;
+    });
+  });
+  $(function() {
+    $('.inventory_for_db2').bind('click', function() {
+      $.getJSON($SCRIPT_ROOT + '/_get_db2', {
+        invent_val: $(this).attr("value"),
+      }, function(data) {
+      $.each(data.result, function(i, item){
+        console.log(item.inst_name)
+        console.log(item.listen_port)
+      });
+      });
+      return false;
+    });
+  });
+
+
+
+
+
+</script>
+</html>

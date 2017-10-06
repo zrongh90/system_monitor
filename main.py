@@ -1,0 +1,70 @@
+import json
+from flask import Flask, render_template, request, jsonify
+from modules import System, WebSphere, DB2, app, db, AlchemyJsonEncoder
+NUM_PER_PAGE = 15
+
+
+@app.errorhandler(404)
+def page_not_found(error):
+    return render_template("404.html")
+
+
+@app.route('/')
+def get_all_system():
+    sys_was_count_list = []
+    sys_db2_count_list = []
+    page = request.args.get('page', 1, type=int)
+    # 对结果进行分页
+    paginate = System.query.paginate(page, NUM_PER_PAGE)
+    systems = paginate.items
+    for one_system in systems:
+        sys_was_count = WebSphere.query.filter_by(sys_inventory=one_system.inventory).count()
+        sys_db2_count = DB2.query.filter_by(sys_inventory=one_system.inventory).count()
+        sys_was_count_list.append(sys_was_count)
+        sys_db2_count_list.append(sys_db2_count)
+    db.session.close()
+    print(systems)
+    return render_template("all_system.html", system_list=systems, pagination=paginate,
+                           sys_was_count_list=sys_was_count_list, sys_db2_count_list=sys_db2_count_list)
+
+
+# 传统的获取系统信息的方法，根据系统的inventory获取系统信息，was信息和db2信息并渲染details.html返回
+# input: inventory
+# return: details.html
+@app.route('/detail/<inventory>')
+def detail(inventory=None):
+    system_detail = System.query.filter_by(inventory=inventory).first_or_404()
+    was_detail = WebSphere.query.filter_by(sys_inventory=inventory).all()
+    db2_detail = DB2.query.filter_by(sys_inventory=inventory).all()
+    print(system_detail)
+    print(was_detail)
+    db.session.close()
+    return render_template("details.html", system_detail_in=system_detail, was_detail_in=was_detail,
+                           db2_detail_in=db2_detail)
+
+
+# 通过jquery获取系统的WAS信息
+# input: invent_val
+# return: serialized WebSphere Object
+@app.route('/_get_was')
+def jquery_get_was_info():
+    inventory_input = request.args.get('invent_val', 0, type=str)
+    print("inventory_input:" + inventory_input)
+    was_detail = WebSphere.query.filter_by(sys_inventory=inventory_input)
+    return jsonify(result=[i.serialize for i in was_detail.all()])
+
+
+# 通过jquery获取系统的DB2信息
+# input: invent_val
+# return: serialized DB2 Object
+@app.route('/_get_db2')
+def jquery_get_db2_info():
+    inventory_input = request.args.get('invent_val', 0, type=str)
+    print("inventory_input:" + inventory_input)
+    db2_detail = DB2.query.filter_by(sys_inventory=inventory_input)
+    return jsonify(result=[i.serialize for i in db2_detail.all()])
+
+
+if __name__ == '__main__':
+    app.debug = True
+    app.run()
