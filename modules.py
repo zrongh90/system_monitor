@@ -63,7 +63,6 @@ class WebSphere(db.Model):
     prf_name = db.Column(db.String(20))
     srv_name = db.Column(db.String(20))
     sys_inventory = db.Column(db.String(20), ForeignKey('system.inventory'))
-    #sys_info = relationship("system", back_populates="websphere")
 
     def __init__(self, max_mem, curr_mem, prf_name, srv_name, sys_inventory):
         self.max_mem = max_mem

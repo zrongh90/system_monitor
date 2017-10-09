@@ -3,16 +3,16 @@
 <head>
     <meta charset="utf-8">
     <title>主机信息列表</title>
-    <link rel="stylesheet" href="http://cdn.static.runoob.com/libs/bootstrap/3.3.7/css/bootstrap.min.css">
-    <script src="http://cdn.static.runoob.com/libs/jquery/2.1.1/jquery.min.js"></script>
-    <script src="http://cdn.static.runoob.com/libs/bootstrap/3.3.7/js/bootstrap.min.js"></script>
-    {%import '_macro.html' as macros%}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
+    <script src="{{ url_for('static', filename='js/jquery.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script>
 </head>
 <body>
 <div class="container">
-{%if pagination%}
-{{ macros.render_pagination(pagination,'get_all_system') }}
-{%endif%}
+    {%import '_macro.html' as macros%}
+    {%if pagination%}
+    {{ macros.render_pagination(pagination,'get_all_system') }}
+    {%endif%}
 </div>
 <div class="container">
     <table class="table">
@@ -94,6 +94,8 @@
       return false;
     });
   });
+
+
 
 
 
