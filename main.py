@@ -1,12 +1,31 @@
 import json
+import string
+
 from flask import Flask, render_template, request, jsonify
+from sqlalchemy import distinct
+
 from modules import System, WebSphere, DB2, app, db, AlchemyJsonEncoder
-NUM_PER_PAGE = 15
+
+NUM_PER_PAGE = 11
 
 
 @app.errorhandler(404)
 def page_not_found(error):
     return render_template("404.html")
+
+
+@app.errorhandler(405)
+def page_not_found(error):
+    return render_template("404.html")
+
+
+@app.errorhandler(500)
+def page_not_found(error):
+    return render_template("500.html")
+
+
+def get_os_list():
+    return set(db.session.query(distinct(System.os_info)).all())
 
 
 @app.route('/')
@@ -17,6 +36,7 @@ def get_all_system():
     # 对结果进行分页
     paginate = System.query.paginate(page, NUM_PER_PAGE)
     systems = paginate.items
+
     for one_system in systems:
         sys_was_count = WebSphere.query.filter_by(sys_inventory=one_system.inventory).count()
         sys_db2_count = DB2.query.filter_by(sys_inventory=one_system.inventory).count()
@@ -24,7 +44,43 @@ def get_all_system():
         sys_db2_count_list.append(sys_db2_count)
     db.session.close()
     print(systems)
-    return render_template("all_system.html", system_list=systems, pagination=paginate,
+    return render_template("all_system.html", inventory_filter_val="", title="主机信息列表", system_list=systems,
+                           pagination=paginate, os_filter_val="", os_list_val=get_os_list(),
+                           sys_was_count_list=sys_was_count_list, sys_db2_count_list=sys_db2_count_list)
+
+
+@app.route('/filter', methods=['POST', 'GET'])
+def get_filter_system(inventory_filter=None, os_filter=None):
+    print("filter")
+    sys_was_count_list = []
+    sys_db2_count_list = []
+    if request.method == 'POST':
+        inventory_filter = request.form['inventory_filter']
+        os_filter = request.form['os_filter']
+        print("POST")
+    elif request.method == 'GET':
+        inventory_filter = request.args.get('inventory_filter')
+        os_filter = request.args.get('os_filter')
+        print("GET")
+    print("inventory_filter:" + inventory_filter)
+    print("os_filter:" + os_filter)
+    page = request.args.get('page', 1, type=int)
+    # 对结果进行分页
+    if os_filter == "all":
+        paginate = System.query.filter(System.inventory.like(inventory_filter + "%")).paginate(page, NUM_PER_PAGE)
+    else:
+        paginate = System.query.filter(System.inventory.like(inventory_filter + "%")).\
+            filter(System.os_info == str(os_filter)).paginate(page, NUM_PER_PAGE)
+    systems = paginate.items
+    for one_system in systems:
+        sys_was_count = WebSphere.query.filter_by(sys_inventory=one_system.inventory).count()
+        sys_db2_count = DB2.query.filter_by(sys_inventory=one_system.inventory).count()
+        sys_was_count_list.append(sys_was_count)
+        sys_db2_count_list.append(sys_db2_count)
+    db.session.close()
+    print(systems)
+    return render_template("all_system.html", inventory_filter_val=inventory_filter, title="主机信息列表",
+                           system_list=systems, pagination=paginate, os_filter_val=os_filter, os_list_val=get_os_list(),
                            sys_was_count_list=sys_was_count_list, sys_db2_count_list=sys_db2_count_list)
 
 
@@ -39,7 +95,7 @@ def detail(inventory=None):
     print(system_detail)
     print(was_detail)
     db.session.close()
-    return render_template("details.html", system_detail_in=system_detail, was_detail_in=was_detail,
+    return render_template("details.html", title="具体信息", system_detail_in=system_detail, was_detail_in=was_detail,
                            db2_detail_in=db2_detail)
 
 
