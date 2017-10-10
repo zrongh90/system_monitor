@@ -1,10 +1,7 @@
-import json
-import string
-
-from flask import Flask, render_template, request, jsonify
+from flask import render_template, request, jsonify
 from sqlalchemy import distinct
 
-from modules import System, WebSphere, DB2, app, db, AlchemyJsonEncoder
+from modules import System, WebSphere, DB2, app, db
 
 NUM_PER_PAGE = 11
 
@@ -24,8 +21,11 @@ def page_not_found(error):
     return render_template("500.html")
 
 
+# 获取数据库中对应的操作系统类型列表，并进行排序
 def get_os_list():
-    return set(db.session.query(distinct(System.os_info)).all())
+    os_list = list(x[0] for x in set(db.session.query(distinct(System.os_info)).all()))
+    os_list.sort()
+    return os_list
 
 
 @app.route('/')
@@ -49,6 +49,10 @@ def get_all_system():
                            sys_was_count_list=sys_was_count_list, sys_db2_count_list=sys_db2_count_list)
 
 
+# 获取过滤后的系统信息，可以根据（inventory/os)进行过滤
+# input: inventory_filter:IP过滤器
+#        os_filter: 操作系统类型过滤器
+# return: details.html
 @app.route('/filter', methods=['POST', 'GET'])
 def get_filter_system(inventory_filter=None, os_filter=None):
     print("filter")
@@ -69,7 +73,7 @@ def get_filter_system(inventory_filter=None, os_filter=None):
     if os_filter == "all":
         paginate = System.query.filter(System.inventory.like(inventory_filter + "%")).paginate(page, NUM_PER_PAGE)
     else:
-        paginate = System.query.filter(System.inventory.like(inventory_filter + "%")).\
+        paginate = System.query.filter(System.inventory.like(inventory_filter + "%")). \
             filter(System.os_info == str(os_filter)).paginate(page, NUM_PER_PAGE)
     systems = paginate.items
     for one_system in systems:

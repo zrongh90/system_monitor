@@ -1,6 +1,6 @@
 from flask import json, Flask
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import Column, String, Integer, ForeignKey
+from sqlalchemy import ForeignKey
 from sqlalchemy.orm import Query
 
 app = Flask(__name__)
@@ -10,34 +10,34 @@ db = SQLAlchemy(app)
 db.init_app(app)
 
 
-class AlchemyJsonEncoder(json.JSONEncoder):
-    def default(self, obj):
-        # 判断是否是Query
-        if isinstance(obj, Query):
-            # 定义一个字典数组
-            fields = []
-            # 定义一个字典对象
-            record = {}
-            # 检索结果集的行记录
-            for rec in obj.all():
-                # 检索记录中的成员
-                for field in [x for x in dir(rec) if
-                              # 过滤属性
-                              not x.startswith('_')
-                              # 过滤掉方法属性
-                              and hasattr(rec.__getattribute__(x), '__call__') == False
-                              # 过滤掉不需要的属性
-                              and x != 'metadata']:
-                    data = rec.__getattribute__(field)
-                    try:
-                        record[field] = data
-                    except TypeError:
-                        record[field] = None
-                fields.append(record)
-            # 返回字典数组
-            return fields
-        # 其他类型的数据按照默认的方式序列化成JSON
-        return json.JSONEncoder.default(self, obj)
+# class AlchemyJsonEncoder(json.JSONEncoder):
+#     def default(self, obj):
+#         # 判断是否是Query
+#         if isinstance(obj, Query):
+#             # 定义一个字典数组
+#             fields = []
+#             # 定义一个字典对象
+#             record = {}
+#             # 检索结果集的行记录
+#             for rec in obj.all():
+#                 # 检索记录中的成员
+#                 for field in [x for x in dir(rec) if
+#                               # 过滤属性
+#                               not x.startswith('_')
+#                               # 过滤掉方法属性
+#                               and hasattr(rec.__getattribute__(x), '__call__') == False
+#                               # 过滤掉不需要的属性
+#                               and x != 'metadata']:
+#                     data = rec.__getattribute__(field)
+#                     try:
+#                         record[field] = data
+#                     except TypeError:
+#                         record[field] = None
+#                 fields.append(record)
+#             # 返回字典数组
+#             return fields
+#         # 其他类型的数据按照默认的方式序列化成JSON
+#         return json.JSONEncoder.default(self, obj)
 
 
 class System(db.Model):
@@ -50,8 +50,9 @@ class System(db.Model):
     cpu_num = db.Column(db.Integer)
 
     def __repr__(self):
-        return "inventory=%s, hostname=%s, os_info=%s, platform=%s, cpu_num=%s" % (self.inventory,\
-                                            self.hostname, self.os_info, self.platform ,self.cpu_num)
+        return "inventory=%s, hostname=%s, os_info=%s, platform=%s, cpu_num=%s" % (self.inventory, \
+                                                                                   self.hostname, self.os_info,
+                                                                                   self.platform, self.cpu_num)
 
 
 class WebSphere(db.Model):
@@ -84,8 +85,8 @@ class WebSphere(db.Model):
         }
 
     def __repr__(self):
-        return "was_info_id=%s, prf_name=%s, srv_name=%s, max_mem=%s, curr_mem=%s" % (\
-         self.was_info_id, self.prf_name, self.srv_name, self.max_mem, self.curr_mem)
+        return "was_info_id=%s, prf_name=%s, srv_name=%s, max_mem=%s, curr_mem=%s" % ( \
+            self.was_info_id, self.prf_name, self.srv_name, self.max_mem, self.curr_mem)
 
 
 class DB2(db.Model):
@@ -102,12 +103,13 @@ class DB2(db.Model):
         return {
             'db2_info_id': self.db2_info_id,
             'sys_inventory': self.sys_inventory,
-            'inst_name' : self.inst_name,
+            'inst_name': self.inst_name,
             'db_name': self.db_name,
             'listen_port': self.listen_port
         }
+
     def __repr__(self):
-        return "db2_info_id=%s, inst_name=%s, db_name=%s, listen_port=%s" % (\
+        return "db2_info_id=%s, inst_name=%s, db_name=%s, listen_port=%s" % ( \
             self.db2_info_id, self.inst_name, self.db_name, self.listen_port)
 
 

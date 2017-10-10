@@ -4,7 +4,7 @@
         {% if page %}
             {% if page != pagination.page %}
                 <li><a href="{{ url_for(endpoint, page=page,inventory_filter=inventory_filter_val,
-                os_filter=os_filter_val) }}">{{ endpoint }}{{ page }}</a></li>
+                os_filter=os_filter_val) }}">{{ page }}</a></li>
             {% else %}
                <li class="active"><a>{{ pagination.page }}</a></li>
             {% endif %}

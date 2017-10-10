@@ -13,10 +13,10 @@
 		<select class="form-control" name="os_filter">
                 <option>all</option>
             {% for os in os_list_val %}
-            {% if os[0] == os_filter_val %}
-                <option selected="True" value="{{ os[0] }}">{{ os[0] }}</option>
+            {% if os == os_filter_val %}
+                <option selected="True" value="{{ os }}">{{ os }}</option>
             {% else %}
-                <option value="{{ os[0] }}">{{ os[0] }}</option>
+                <option value="{{ os }}">{{ os }}</option>
             {% endif %}
             {% endfor %}
 		</select>
@@ -46,18 +46,21 @@
             <td>{{ x.platform }}</td>
             <td>{{ x.cpu_num }}</td>
             <td>
-                <div title="标题" data-toggle="popover"
-                     data-placement="top" class="inventory_for_was"
-                     data-content="内容" value="{{ x.inventory }}">
+                <a tabindex="0" role="button" title="WAS信息" data-toggle="popover"
+                     data-placement="right" class="inventory_for_was" data-trigger="focus"
+                     data-content="" data-delay=200 value="{{ x.inventory }}">
                     {% if sys_was_count_list[loop.index0] > 0 %}
                     {{ sys_was_count_list[loop.index0] }} was
                     {% endif %}
-                </div>
-                <div class="inventory_for_db2" value="{{ x.inventory }}">
+                </a>
+                <a tabindex="0" role="button" title="DB2信息" data-toggle="popover"
+                     data-placement="right" class="inventory_for_db2" data-trigger="focus"
+                     data-content="" data-delay=200 value="{{ x.inventory }}">
+                <!--<div class="inventory_for_db2" value="{{ x.inventory }}">-->
                     {% if sys_db2_count_list[loop.index0] > 0 %}
                     {{ sys_db2_count_list[loop.index0] }} db2
                     {% endif %}
-                </div>
+                </a>
             </td>
             <td>{{ x[6] }}</td>
             <td>{{ x[7] }}</td>
@@ -82,32 +85,39 @@
         invent_val: $(this).attr("value"),
       }, function(data) {
         pop_inventory = ''
+        one_result = '<table class="table"><thead><tr><th>profile_name</th><th>server_name</th></tr></thead>'
         $.each(data.result, function(i, item){
             pop_inventory = item.sys_inventory
-            <!--console.log(item.prf_name);-->
-            <!--console.log(item.srv_name);-->
-            <!--console.log(item.sys_inventory);-->
-            <!--$("[value='"+pop_inventory+"']").attr("data-content",item.prf_name)-->
-            <!--console.log($("[value='"+pop_inventory+"']").attr("data-content"))-->
+            one_result = one_result +  "<tr><td>" + item.prf_name + "</td>" + "<td>" + item.srv_name + "</td></tr>"
+            console.log(item.prf_name);
+            console.log(item.srv_name);
+            console.log(item.sys_inventory);
          });
-         <!--alert($("[value='"+pop_inventory+"']").attr("data-content"))-->
-         <!--$("[value='"+pop_inventory+"']").popover();-->
+         $("[value='"+pop_inventory+"']").attr("data-content",one_result + "</table>")
+         console.log($("[value='"+pop_inventory+"']").attr("data-content"))
       });
       return false;
-    });
+    }).popover({html : true });
   });
   $(function() {
     $('.inventory_for_db2').bind('click', function() {
       $.getJSON($SCRIPT_ROOT + '/_get_db2', {
         invent_val: $(this).attr("value"),
       }, function(data) {
+      pop_inventory = ''
+        one_result = '<table class="table"><thead><tr><th>instance_name</th><th>database_name</th></tr></thead>'
       $.each(data.result, function(i, item){
-        console.log(item.inst_name)
-        console.log(item.listen_port)
+      pop_inventory = item.sys_inventory
+            one_result = one_result +  "<tr><td>" + item.inst_name + "</td>" + "<td>" + item.db_name + "</td></tr>"
+            console.log(item.inst_name);
+            console.log(item.db_name);
+            console.log(item.sys_inventory);
       });
+      $("[value='"+pop_inventory+"']").attr("data-content",one_result + "</table>")
+         console.log($("[value='"+pop_inventory+"']").attr("data-content"))
       });
       return false;
-    });
+    }).popover({html : true });
   });
 </script>
 {% endblock %}
