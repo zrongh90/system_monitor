@@ -1,7 +1,6 @@
-from flask import json, Flask
+from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import ForeignKey
-from sqlalchemy.orm import Query
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///zxyx.db'
@@ -48,11 +47,11 @@ class System(db.Model):
     os_info = db.Column(db.String(20))
     platform = db.Column(db.String(20), nullable=True)
     cpu_num = db.Column(db.Integer)
+    memory = db.Column(db.Integer)
 
     def __repr__(self):
-        return "inventory=%s, hostname=%s, os_info=%s, platform=%s, cpu_num=%s" % (self.inventory, \
-                                                                                   self.hostname, self.os_info,
-                                                                                   self.platform, self.cpu_num)
+        return "inventory=%s, hostname=%s, os_info=%s, platform=%s, cpu_num=%s, memory=%s" % (self.inventory, \
+                    self.hostname, self.os_info, self.platform, self.cpu_num, self.memory)
 
 
 class WebSphere(db.Model):
@@ -85,8 +84,8 @@ class WebSphere(db.Model):
         }
 
     def __repr__(self):
-        return "was_info_id=%s, prf_name=%s, srv_name=%s, max_mem=%s, curr_mem=%s" % ( \
-            self.was_info_id, self.prf_name, self.srv_name, self.max_mem, self.curr_mem)
+        return "sys_inventory=%s, was_info_id=%s, prf_name=%s, srv_name=%s, max_mem=%s, curr_mem=%s" % ( \
+            self.sys_inventory, self.was_info_id, self.prf_name, self.srv_name, self.max_mem, self.curr_mem)
 
 
 class DB2(db.Model):
@@ -109,8 +108,8 @@ class DB2(db.Model):
         }
 
     def __repr__(self):
-        return "db2_info_id=%s, inst_name=%s, db_name=%s, listen_port=%s" % ( \
-            self.db2_info_id, self.inst_name, self.db_name, self.listen_port)
+        return "sys_inventory=%s, db2_info_id=%s, inst_name=%s, db_name=%s, listen_port=%s" % ( \
+            self.sys_inventory, self.db2_info_id, self.inst_name, self.db_name, self.listen_port)
 
 
 if __name__ == '__main__':

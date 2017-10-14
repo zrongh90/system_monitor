@@ -8,7 +8,7 @@ def parse_file(in_file_path):
     system_list = []
     for cur_row in range(1, sheet.nrows):
         fs = [sheet.cell_value(cur_row, x) for x in [0, 1, 2, 5, 6, 7, 8, 9]]
-        one_system = System(inventory=fs[0], hostname=fs[1], os_info=fs[2], platform=fs[3], cpu_num=fs[4])
+        one_system = System(inventory=fs[0], hostname=fs[1], os_info=fs[2], platform=fs[3], cpu_num=fs[4] , memory=fs[5])
         system_list.append(one_system)
     return system_list
 
@@ -27,11 +27,11 @@ if __name__ == '__main__':
 
     one_db2 = DB2(sys_inventory="11.8.8.220", inst_name="test_inst", db_name="test_db", listen_port=50002)
     #session = DBSession()
-    #db.session.add(three_was)
-    db.session.add(one_db2)
-    #db.session.add_all(system_list)
-    #db.session.add(one_was)
-    #db.session.add(two_was)
+    db.session.add(three_was)
+    #db.session.add(one_db2)
+    db.session.add_all(system_list)
+    db.session.add(one_was)
+    db.session.add(two_was)
     #systems = session.query(System).all()
     #print(systems)
     #was = session.query(WebSphere).all()

@@ -6,8 +6,6 @@
     <label>inventory</label>
     <input type="text" class="form-control" id="inventory_filter_id" placeholder="inven_filter"
            name="inventory_filter" value={{ inventory_filter_val }} >
-    <!--<input type="text" class="form-control" id="os_filter_id" placeholder="os_filter"-->
-           <!--name="os_filter" value={{ os_filter_val }} >-->
 	<div class="form-group">
 		<label>os_filter</label>
 		<select class="form-control" name="os_filter">
@@ -56,7 +54,6 @@
                 <a tabindex="0" role="button" title="DB2信息" data-toggle="popover"
                      data-placement="right" class="inventory_for_db2" data-trigger="focus"
                      data-content="" data-delay=200 value="{{ x.inventory }}">
-                <!--<div class="inventory_for_db2" value="{{ x.inventory }}">-->
                     {% if sys_db2_count_list[loop.index0] > 0 %}
                     {{ sys_db2_count_list[loop.index0] }} db2
                     {% endif %}
@@ -71,14 +68,13 @@
     {% import '_macro.html' as macros %}
     {% if pagination and inventory_filter_val == "" %}
     {{ macros.render_pagination(pagination,'get_all_system',inventory_filter_val, os_filter_val) }}
-        {% elif  inventory_filter_val is not none%}
+        {% elif  inventory_filter_val is not none %}
         {{ macros.render_pagination(pagination,'get_filter_system',inventory_filter_val, os_filter_val) }}
     {% endif %}
 </div>
 </body>
 <script type=text/javascript>
  $SCRIPT_ROOT = {{ request.script_root|tojson|safe }};
-
   $(function() {
     $('.inventory_for_was').bind('click', function() {
       $.getJSON($SCRIPT_ROOT + '/_get_was', {

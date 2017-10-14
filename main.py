@@ -2,6 +2,9 @@ from flask import render_template, request, jsonify
 from sqlalchemy import distinct
 
 from modules import System, WebSphere, DB2, app, db
+#from test_ansible import ansible_run
+from ansible_modules import ansible_run
+from utils import ansible_get
 
 NUM_PER_PAGE = 11
 
@@ -32,18 +35,19 @@ def get_os_list():
 def get_all_system():
     sys_was_count_list = []
     sys_db2_count_list = []
+    # print("get_all_system")
     page = request.args.get('page', 1, type=int)
     # 对结果进行分页
     paginate = System.query.paginate(page, NUM_PER_PAGE)
     systems = paginate.items
-
+    # print(systems)
     for one_system in systems:
         sys_was_count = WebSphere.query.filter_by(sys_inventory=one_system.inventory).count()
         sys_db2_count = DB2.query.filter_by(sys_inventory=one_system.inventory).count()
         sys_was_count_list.append(sys_was_count)
         sys_db2_count_list.append(sys_db2_count)
     db.session.close()
-    print(systems)
+
     return render_template("all_system.html", inventory_filter_val="", title="主机信息列表", system_list=systems,
                            pagination=paginate, os_filter_val="", os_list_val=get_os_list(),
                            sys_was_count_list=sys_was_count_list, sys_db2_count_list=sys_db2_count_list)
@@ -93,14 +97,27 @@ def get_filter_system(inventory_filter=None, os_filter=None):
 # return: details.html
 @app.route('/detail/<inventory>')
 def detail(inventory=None):
-    system_detail = System.query.filter_by(inventory=inventory).first_or_404()
-    was_detail = WebSphere.query.filter_by(sys_inventory=inventory).all()
-    db2_detail = DB2.query.filter_by(sys_inventory=inventory).all()
-    print(system_detail)
-    print(was_detail)
-    db.session.close()
-    return render_template("details.html", title="具体信息", system_detail_in=system_detail, was_detail_in=was_detail,
-                           db2_detail_in=db2_detail)
+    try:
+        system_detail = System.query.filter_by(inventory=inventory).first_or_404()
+        was_detail = WebSphere.query.filter_by(sys_inventory=inventory).all()
+        db2_detail = DB2.query.filter_by(sys_inventory=inventory).all()
+        # 删除数据库中目前有的was信息
+        for one_was in was_detail:
+            db.session.delete(one_was)
+        # call ansible function to retrieve websphere,db2,system info for target inventory
+        # current only realize get websphere info
+        #ansible_run(inventory_in=inventory)
+        db.session.commit()
+        new_was_detail = WebSphere.query.filter_by(sys_inventory=inventory).all()
+        return render_template("details.html", title="具体信息", system_detail_in=system_detail,
+                               was_detail_in=new_was_detail,
+                               db2_detail_in=db2_detail)
+    except Exception as e:
+        print(e.message)
+        # 更新失败，立刻回滚
+        db.session.rollback()
+        # TODO: 使用flash进行提示
+        return render_template("500.html")
 
 
 # 通过jquery获取系统的WAS信息
