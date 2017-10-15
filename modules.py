@@ -1,3 +1,4 @@
+# -*- coding: UTF-8 -*-
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import ForeignKey
@@ -5,6 +6,7 @@ from sqlalchemy import ForeignKey
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///zxyx.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = True
+#app.config['SQLALCHEMY_ECHO'] = True
 db = SQLAlchemy(app)
 db.init_app(app)
 
@@ -59,10 +61,10 @@ class WebSphere(db.Model):
 
     was_info_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     max_mem = db.Column(db.Integer)
-    curr_mem = db.Column(db.Integer)
-    prf_name = db.Column(db.String(20))
+    curr_mem = db.Column(db.Float)
+    prf_name = db.Column(db.String(100))
     srv_name = db.Column(db.String(20))
-    sys_inventory = db.Column(db.String(20), ForeignKey('system.inventory'))
+    sys_inventory = db.Column(db.String(50), ForeignKey('system.inventory'))
 
     def __init__(self, max_mem, curr_mem, prf_name, srv_name, sys_inventory):
         self.max_mem = max_mem

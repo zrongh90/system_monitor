@@ -12,7 +12,7 @@
                 <option>all</option>
             {% for os in os_list_val %}
             {% if os == os_filter_val %}
-                <option selected="True" value="{{ os }}">{{ os }}</option>
+                <option selected="selected" value="{{ os }}">{{ os }}</option>
             {% else %}
                 <option value="{{ os }}">{{ os }}</option>
             {% endif %}
@@ -72,7 +72,6 @@
         {{ macros.render_pagination(pagination,'get_filter_system',inventory_filter_val, os_filter_val) }}
     {% endif %}
 </div>
-</body>
 <script type=text/javascript>
  $SCRIPT_ROOT = {{ request.script_root|tojson|safe }};
   $(function() {

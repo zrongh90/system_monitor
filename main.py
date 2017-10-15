@@ -1,10 +1,10 @@
+# -*- coding: UTF-8 -*-
+from imp import reload
+
 from flask import render_template, request, jsonify
 from sqlalchemy import distinct
-
 from modules import System, WebSphere, DB2, app, db
-#from test_ansible import ansible_run
-from ansible_modules import ansible_run
-from utils import ansible_get
+#from ansible_modules import ansible_run
 
 NUM_PER_PAGE = 11
 
@@ -102,6 +102,7 @@ def detail(inventory=None):
         was_detail = WebSphere.query.filter_by(sys_inventory=inventory).all()
         db2_detail = DB2.query.filter_by(sys_inventory=inventory).all()
         # 删除数据库中目前有的was信息
+        print("remove current websphere info")
         for one_was in was_detail:
             db.session.delete(one_was)
         # call ansible function to retrieve websphere,db2,system info for target inventory
@@ -144,4 +145,7 @@ def jquery_get_db2_info():
 
 if __name__ == '__main__':
     app.debug = True
+    #import sys
+    #reload(sys)
+    #sys.setdefaultencoding('utf8')
     app.run()

@@ -13,7 +13,7 @@
         <tr>
             <td>{{ system_detail_in.hostname }}</td>
             <td>{{ system_detail_in.inventory }}</td>
-            <td>{{ system_detail_in.memory }}</td>
+            <td>{{ system_detail_in.memory }}MB</td>
         </tr>
         </tbody>
     </table>
@@ -36,8 +36,8 @@
             <tbody>
 
             {% for one_was in was_detail_in %}
-            {% set mem_per = one_was.curr_mem %}
-            {% set curr_mem = (system_detail_in.memory * mem_per / 100) | round(2,'common') %}
+            {% set curr_mem = (system_detail_in.memory * one_was.curr_mem / 100) | round(2,'common') %}
+            {% set mem_per = (curr_mem / one_was.max_mem * 100) | round(2,'common') %}
             {% if mem_per > 90 %}
             <tr class="text-danger">
                 {% else %}

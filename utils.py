@@ -1,20 +1,25 @@
+# -*- coding: UTF-8 -*-
 from modules import db, System, WebSphere, DB2
+from flask import render_template
 
 
 def inventory_was_ansible_update(was_info_list=None, inventory=None):
+    print("run into was info update")
     for one_was in was_info_list:
         if one_was.split('|').__len__() != 4 or one_was.find("servers") == -1:
             print("Error to parse was detail")
-            exit(1)
+            return render_template("500.html") 
         _, was, max_mem, curr_mem = one_was.split('|')
+	print("do with " + one_was)
         prf_path, server = was.split('=')[1].replace('configuration', '').split('servers')
         max_mem_in = max_mem.replace('-Xmx', '').replace('m', '')
         curr_mem_in = curr_mem.replace('mem%', '')
         prf_name_in = prf_path
         srv_name_in = server.replace('/', '')
-        new_was = WebSphere(max_mem=max_mem_in, curr_mem=curr_mem_in, prf_name=prf_name_in, srv_name=srv_name_in,
-                            sys_inventory=inventory)
-        print("insert new was object (" + new_was + ") into database")
+        new_was = WebSphere(max_mem=int(max_mem_in), curr_mem=float(curr_mem_in), prf_name=prf_name_in, srv_name=srv_name_in,
+                            sys_inventory=str(inventory))
+	print(new_was)
+        print("insert new was object into database")
         db.session.add(new_was)
 
 
