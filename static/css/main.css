@@ -1,1 +1,21 @@
-.container { margin-top: 30px}
+.logo-text {
+    font-size: 30px;
+    font-weight: 300;
+}
+
+.nav-text{
+    font-size: 20px;
+    font-weight: 200;
+}
+
+thead{
+    font-size: 18px;
+}
+
+.container {
+    margin-top: 30px;
+}
+
+a {
+    color: #337ab7;
+}

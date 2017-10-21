@@ -39,12 +39,10 @@ def get_os_list():
 def get_all_system():
     sys_was_count_list = []
     sys_db2_count_list = []
-    # print("get_all_system")
     page = request.args.get('page', 1, type=int)
     # 对结果进行分页
     paginate = System.query.paginate(page, NUM_PER_PAGE)
     systems = paginate.items
-    # print(systems)
     for one_system in systems:
         sys_was_count = WebSphere.query.filter_by(sys_inventory=one_system.inventory).count()
         sys_db2_count = DB2.query.filter_by(sys_inventory=one_system.inventory).count()
@@ -57,13 +55,15 @@ def get_all_system():
                            sys_was_count_list=sys_was_count_list, sys_db2_count_list=sys_db2_count_list)
 
 
-# 获取过滤后的系统信息，可以根据（inventory/os)进行过滤
-# input: inventory_filter:IP过滤器
-#        os_filter: 操作系统类型过滤器
-# return: details.html
 @app.route('/filter', methods=['POST', 'GET'])
 def get_filter_system(inventory_filter=None, os_filter=None):
-    print("filter")
+    """
+    获取过滤后的系统信息，可以根据（inventory/os)进行过滤
+    :param inventory_filter: IP过滤器
+    :param os_filter: 操作系统类型过滤器
+    :return: details.html
+    """
+    my_log("filter")
     sys_was_count_list = []
     sys_db2_count_list = []
     if request.method == 'POST':
@@ -96,11 +96,14 @@ def get_filter_system(inventory_filter=None, os_filter=None):
                            sys_was_count_list=sys_was_count_list, sys_db2_count_list=sys_db2_count_list)
 
 
-# 传统的获取系统信息的方法，根据系统的inventory获取系统信息，was信息和db2信息并渲染details.html返回
-# input: inventory
-# return: details.html
 @app.route('/detail/<inventory>')
 def detail(inventory=None):
+    """
+    传统的获取系统信息的方法
+    根据系统的inventory获取系统信息，was信息和db2信息并渲染details.html返回
+    :param inventory: 系统IP
+    :return: details.html: 系统详细信息页面，包括系统信息/was/db2信息
+    """
     try:
         system_detail = System.query.filter_by(inventory=inventory).first_or_404()
         was_detail = WebSphere.query.filter_by(sys_inventory=inventory).all()
@@ -117,7 +120,7 @@ def detail(inventory=None):
         # db.session.commit()
         new_was_detail = WebSphere.query.filter_by(sys_inventory=inventory).all()
         new_db2_detail = DB2.query.filter_by(sys_inventory=inventory).all()
-        print(new_db2_detail)
+        my_log(new_db2_detail)
         return render_template("details.html", title="具体信息", system_detail_in=system_detail,
                                was_detail_in=new_was_detail,
                                db2_detail_in=new_db2_detail)
@@ -125,7 +128,6 @@ def detail(inventory=None):
         my_log(e)
         # 更新失败，立刻回滚
         db.session.rollback()
-        # TODO: 使用flash进行提示
         return render_template("500.html")
 
 
@@ -135,15 +137,33 @@ def tivoli():
 
 
 @app.route('/clear_tivoli_alert', methods=['POST'])
-def clear_tivoli_alert():
-    my_log("test_clear")
+def clear_tivoli_alert(event_id=None, event_ip=None, event_content=None):
+    """
+    根据条件，手工将tivoli监控reporter数据库的目标记录状态修改为0
+    :param event_id: 事件ID
+    :param event_ip: 事件IP
+    :param event_content: 事件内容
+    :return: result: 清理结果
+    """
+    my_log("run into tivoli alert clear")
     event_id = request.form.get('event_id', 0, type=int)
-    event_ip = request.form.get('event_ip', 0, type=str)
-    event_content = request.form.get('event_content', 0, type=str)
-
-    my_log(event_id)
-    msg = "success update tivoli for event_id: " + str(event_id)
-    flash(msg, 'success')
+    event_ip = request.form.get('event_ip', None, type=str)
+    event_content = request.form.get('event_content', None, type=str)
+    if event_id:
+        my_log(event_id)
+        sleep(5)
+        msg = "success update tivoli for event_id: " + str(event_id)
+        flash(msg, 'success')
+    if event_ip:
+        my_log(event_ip)
+        sleep(5)
+        msg = "success update tivoli for event_ip: " + str(event_ip)
+        flash(msg, 'success')
+    if event_content:
+        my_log(event_content)
+        sleep(5)
+        msg = "success update tivoli for event_content: " + str(event_content)
+        flash(msg, 'success')
     return redirect(url_for('tivoli'))
     # return render_template("tivoli.html")
 
@@ -164,22 +184,39 @@ def jquery_get_was_info():
 # return: serialized DB2 Object
 @app.route('/_get_db2')
 def jquery_get_db2_info():
-    inventory_input = request.args.get('invent_val', 0, type=str)
+    inventory_input = request.args.get('invent_val', None, type=str)
     my_log("inventory_input:" + inventory_input)
     db2_detail = DB2.query.filter_by(sys_inventory=inventory_input)
     return jsonify(result=[i.serialize for i in db2_detail.all()])
 
 
-# 通过jquery获取收集DB2信息
-# input: db_inven 收集DB2日志的系统IP
-# input: db_name  收集的数据库
-# input: inst_name 数据库的instance用户名
-# return: serialized DB2 Object
+@app.route('/_collect_sys')
+def jquery_collect_system(sys_inven=None):
+    """
+    通过jquery 调用ansible接口访问主机并调用linux_perf脚本收集系统信息
+    :param sys_inven: 目标主机IP
+    :return: result: 收集结果
+    """
+    my_log("into system perf collect!")
+    sys_inven = request.args.get('sys_inven', None, type=str)
+    my_log("do with inventory:" + sys_inven)
+    # TODO: call ansible api to run linux_perf script
+    sleep(5)
+    return jsonify(result="success")
+
+
 @app.route('/_collect_db2')
-def jquery_collect_db2():
-    db_inven = request.args.get('db_inven', 0, type=str)
-    db_name = request.args.get('db_name', 0, type=str)
-    inst_name = request.args.get('inst_name', 0, type=str)
+def jquery_collect_db2(db_inven=None, db_name=None, inst_name=None):
+    """
+    通过jquery调用ansile接口收集DB2信息
+    :param db_inven: 收集DB2日志的系统IP
+    :param db_name: 收集的数据库
+    :param inst_name: 数据库的实例名称
+    :return: result： 收集结果
+    """
+    db_inven = request.args.get('db_inven', None, type=str)
+    db_name = request.args.get('db_name', None, type=str)
+    inst_name = request.args.get('inst_name', None, type=str)
     db2_collect_cmd_str = "su - " + inst_name + " -c \"/zxyx/collect/get_db2_log.sh " + inst_name \
                           + " \'\' " + db_name + "\""
     my_log(db2_collect_cmd_str)
@@ -190,12 +227,18 @@ def jquery_collect_db2():
     return jsonify(result="test")
 
 
-# 通过jquery获取收集websphere信息
 @app.route('/_collect_was')
-def jquery_collect_was():
-    was_inven = request.args.get('was_inven', 0, type=str)
-    prf_name = request.args.get('prf_name', 0, type=str)
-    srv_name = request.args.get('srv_name', 0, type=str)
+def jquery_collect_was(was_inven=None, prf_name=None, srv_name=None):
+    """
+    通过jquery调用ansible接口获取收集websphere信息
+    :param was_inven: websphere所在主机IP
+    :param prf_name: websphere的概要文件名
+    :param srv_name: websphere的应用服务器名
+    :return: result: 收集结果
+    """
+    was_inven = request.args.get('was_inven', None, type=str)
+    prf_name = request.args.get('prf_name', None, type=str)
+    srv_name = request.args.get('srv_name', None, type=str)
     my_log(was_inven + ' ' + prf_name + ' ' + srv_name)
     sleep(5)
     return jsonify(result="success")

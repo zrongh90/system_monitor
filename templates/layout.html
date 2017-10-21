@@ -8,39 +8,40 @@
     <script src="{{ url_for('static', filename='js/jquery.js') }}"></script>
     <script src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script>
 </head>
-<div class="collapse navbar-collapse navbar-default">
-    <ul class="nav navbar-nav">
-        <li><a class="navbar-brand" href="{{ url_for('get_all_system') }}">zxyx</a></li>
-        <li class="dropdown">
-            <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true"
-               aria-expanded="false">Tools <span class="caret"></span></a>
-            <ul class="dropdown-menu">
-                <li><a href="{{ url_for('tivoli') }}">Tivoli</a></li>
-                <li><a href="#">Another action</a></li>
-                <li><a href="#">Something else here</a></li>
-            </ul>
-        </li>
-    </ul>
-</div>
+<header>
+    <div class="collapse navbar-collapse navbar-default">
+        <ul class="nav navbar-nav">
+            <li><a class="navbar-brand logo-text">中心运行室</a></li>
+            <li><a class="navbar-brand nav-text" href="{{ url_for('get_all_system') }}">系统列表</a></li>
+            <li class="dropdown">
+                <a href="#" class="dropdown-toggle nav-text" data-toggle="dropdown" role="button" aria-haspopup="true"
+                   aria-expanded="false">工具<span class="caret"></span></a>
+                <ul class="dropdown-menu">
+                    <li><a href="{{ url_for('tivoli') }}">Tivoli监控</a></li>
+                    <li><a href="#">Another action</a></li>
+                    <li><a href="#">Something else here</a></li>
+                </ul>
+            </li>
+        </ul>
+    </div>
+</header>
 {% with messages = get_flashed_messages(with_categories=true) %}
 {% if messages %}
-
-{% for category, message in messages %}
-{% if category == "success" %}
-<div class="alert alert-success" role="alert">
-    {{ message }}
-</div>
-{% elif category == "error" %}
-<div class="alert alert-danger" role="alert">
-    {{ message }}
-</div>
-{% else %}
-<div class="alert alert-warning" role="alert">
-    {{ message }}
-</div>
-{% endif%}
-{% endfor %}
-
+    {% for category, message in messages %}
+        {% if category == "success" %}
+            <div class="alert alert-success" role="alert">
+            {{ message }}
+            </div>
+        {% elif category == "error" %}
+            <div class="alert alert-danger" role="alert">
+            {{ message }}
+            </div>
+        {% else %}
+            <div class="alert alert-warning" role="alert">
+            {{ message }}
+            </div>
+        {% endif%}
+    {% endfor %}
 {% endif %}
 {% endwith %}
 {% block body %}

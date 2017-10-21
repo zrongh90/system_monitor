@@ -11,6 +11,12 @@ def my_log(my_log_messages):
 
 
 def inventory_db2_ansible_update(db2_info_list=None, inventory=None):
+    """
+    通过ansible返回结果更新数据库内的db2信息
+    :param db2_info_list: ansible返回的系统DB2信息列表
+    :param inventory:  目标系统IP
+    :return: None
+    """
     my_log("run into db2 info update")
     for one_db in db2_info_list:
         inst_name_in = one_db["inst_name"]
@@ -23,6 +29,12 @@ def inventory_db2_ansible_update(db2_info_list=None, inventory=None):
 
 
 def inventory_was_ansible_update(was_info_list=None, inventory=None):
+    """
+    通过ansible返回结果更新数据库的websphere信息
+    :param was_info_list: ansible返回的系统WebSphere信息列表
+    :param inventory: 目标系统IP
+    :return: None
+    """
     my_log("run into was info update")
     for one_was in was_info_list:
         prf_name_in = one_was['prf_path']
@@ -37,8 +49,13 @@ def inventory_was_ansible_update(was_info_list=None, inventory=None):
         db.session.add(new_was)
 
 
-# TODO: update system info
 def sys_update(system_info, new_sys_info):
+    """
+    更新系统信息
+    :param system_info:
+    :param new_sys_info:
+    :return:
+    """
     if system_info is None:
         exit(1)
     else:
@@ -50,25 +67,25 @@ def sys_update(system_info, new_sys_info):
         db.session.commit()
 
 
-def was_update(inventory, new_was_info_list):
-    was_info = db.session.query(WebSphere).filter(inventory=inventory).all()
-    # delete was info in db, not need to keep old was info
-    for one_was in was_info:
-        db.session.delete(one_was)
-    for one_new_was in new_was_info_list:
-        db.session.add(one_new_was)
-    db.session.commit()
-
-
-def db2_update(inventory, db2_info_list):
-    pass
-
-
-def info_update(inventory=None, new_sys_info=None, websphere_list=None, db2_list=None):
-    system_info = db.session.query(System).filter(inventory=inventory).first()
-    sys_update(system_info, new_sys_info)
-    was_update(inventory, websphere_list)
-    db2_update(inventory, db2_list)
+# def was_update(inventory, new_was_info_list):
+#     was_info = db.session.query(WebSphere).filter(inventory=inventory).all()
+#     # delete was info in db, not need to keep old was info
+#     for one_was in was_info:
+#         db.session.delete(one_was)
+#     for one_new_was in new_was_info_list:
+#         db.session.add(one_new_was)
+#     db.session.commit()
+#
+#
+# def db2_update(inventory, db2_info_list):
+#     pass
+#
+#
+# def info_update(inventory=None, new_sys_info=None, websphere_list=None, db2_list=None):
+#     system_info = db.session.query(System).filter(inventory=inventory).first()
+#     sys_update(system_info, new_sys_info)
+#     was_update(inventory, websphere_list)
+#     db2_update(inventory, db2_list)
 
 
 

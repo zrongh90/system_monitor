@@ -31,6 +31,7 @@ class DetailResultCallback(CallbackBase):
     ansible callback method for details_ansible_run method to
     supdate the was and db2 modules for select inventory
     """
+    # TODO: use gather facts to update system info
     def v2_runner_on_ok(self, result, **kwargs):
         host = result._host
         component_info_list = result._result['stdout_lines']

@@ -7,6 +7,7 @@
             <td>hostname</td>
             <td>inventory</td>
             <td>memory(MB)</td>
+            <td>action</td>
         </tr>
         </thead>
         <tbody>
@@ -14,6 +15,12 @@
             <td>{{ system_detail_in.hostname }}</td>
             <td>{{ system_detail_in.inventory }}</td>
             <td>{{ system_detail_in.memory }}MB</td>
+            <td>
+                <button type="button" classify="sys_collect" data-loading-text="Processing..."
+                    class="btn btn-primary" autocomplete="off" sys_inven="{{ system_detail_in.inventory }}">
+                  collect
+                    </button>
+                </td>
         </tr>
         </tbody>
     </table>
@@ -51,12 +58,11 @@
                 <td>{{ curr_mem }}</td>
                 <td>{{ mem_per }}</td>
                 <td>
-                    <button type="button" class="was_collect" data-loading-text="Processing..."
+                    <button type="button" classify="was_collect" data-loading-text="Processing..."
                             class="btn btn-primary" autocomplete="off" was_inven="{{ system_detail_in.inventory }}"
                             prf_name="{{ one_was.prf_name }}" srv_name="{{ one_was.srv_name }}">collect
                     </button>
                 </td>
-
             </tr>
             {% endfor %}
             </tbody>
@@ -84,7 +90,7 @@
                 <td>{{ one_db2.db_name }}</td>
                 <td>{{ one_db2.listen_port }}</td>
                 <td>
-                    <button type="button" class="db2_collect" data-loading-text="Processing..."
+                    <button type="button" classify="db2_collect" data-loading-text="Processing..."
                             class="btn btn-primary" autocomplete="off" db_inven="{{ system_detail_in.inventory }}"
                             db_name="{{ one_db2.db_name }}" inst_name="{{ one_db2.inst_name }}">collect
                     </button>
@@ -99,7 +105,9 @@
 <script type=text/javascript>
  $SCRIPT_ROOT = {{ request.script_root|tojson|safe }};
   $(function() {
-    $('.db2_collect').bind('click', function() {
+
+    <!--jquery function to collect db2 info-->
+    $("[classify='db2_collect']").bind('click', function() {
         var $btn = $(this).button('loading')
       $.getJSON($SCRIPT_ROOT + '/_collect_db2', {
         db_inven: $(this).attr("db_inven"),
@@ -107,7 +115,6 @@
         inst_name: $(this).attr("inst_name")
       }, function(data) {
         <!--$.each(data.result, function(i, item){-->
-
          <!--});-->
          $btn.button('reset')
          console.log("return do")
@@ -115,7 +122,9 @@
       });
       return false;
     });
-    $('.was_collect').bind('click', function() {
+
+    <!--jquery function to collect was info-->
+    $("[classify='was_collect']").bind('click', function() {
         var $btn = $(this).button('loading')
       $.getJSON($SCRIPT_ROOT + '/_collect_was', {
         was_inven: $(this).attr("was_inven"),
@@ -131,7 +140,23 @@
       });
       return false;
     });
+
+    <!--jquery function to collect system info-->
+    $("[classify='sys_collect']").bind('click', function() {
+        var $btn = $(this).button('loading')
+      $.getJSON($SCRIPT_ROOT + '/_collect_sys', {
+        sys_inven: $(this).attr("sys_inven"),
+      }, function(data) {
+        <!--$.each(data.result, function(i, item){-->
+         <!--});-->
+         $btn.button('reset')
+         console.log("sys collect return do")
+         console.log(data.result)
+      });
+      return false;
+    });
   });
+
 
 
 </script>
