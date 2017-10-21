@@ -31,6 +31,7 @@
                 <td>max memory(MB)</td>
                 <td>current memory(MB)</td>
                 <td>memory percent(%)</td>
+                <td>action</td>
             </tr>
             </thead>
             <tbody>
@@ -49,7 +50,13 @@
                 <td>{{ one_was.max_mem }}</td>
                 <td>{{ curr_mem }}</td>
                 <td>{{ mem_per }}</td>
-                <!--TODO: new function to call javacore collect method-->
+                <td>
+                    <button type="button" class="was_collect" data-loading-text="Processing..."
+                            class="btn btn-primary" autocomplete="off" was_inven="{{ system_detail_in.inventory }}"
+                            prf_name="{{ one_was.prf_name }}" srv_name="{{ one_was.srv_name }}">collect
+                    </button>
+                </td>
+
             </tr>
             {% endfor %}
             </tbody>
@@ -66,6 +73,7 @@
                 <td>instance name</td>
                 <td>database name</td>
                 <td>listen port</td>
+                <td>action</td>
             </tr>
             </thead>
             <tbody>
@@ -75,6 +83,12 @@
                 <td>{{ one_db2.inst_name }}</td>
                 <td>{{ one_db2.db_name }}</td>
                 <td>{{ one_db2.listen_port }}</td>
+                <td>
+                    <button type="button" class="db2_collect" data-loading-text="Processing..."
+                            class="btn btn-primary" autocomplete="off" db_inven="{{ system_detail_in.inventory }}"
+                            db_name="{{ one_db2.db_name }}" inst_name="{{ one_db2.inst_name }}">collect
+                    </button>
+                </td>
             </tr>
             {% endfor %}
             </tbody>
@@ -82,4 +96,43 @@
     </div>
     {% endif %}
 </div>
+<script type=text/javascript>
+ $SCRIPT_ROOT = {{ request.script_root|tojson|safe }};
+  $(function() {
+    $('.db2_collect').bind('click', function() {
+        var $btn = $(this).button('loading')
+      $.getJSON($SCRIPT_ROOT + '/_collect_db2', {
+        db_inven: $(this).attr("db_inven"),
+        db_name: $(this).attr("db_name"),
+        inst_name: $(this).attr("inst_name")
+      }, function(data) {
+        <!--$.each(data.result, function(i, item){-->
+
+         <!--});-->
+         $btn.button('reset')
+         console.log("return do")
+         console.log(data.result)
+      });
+      return false;
+    });
+    $('.was_collect').bind('click', function() {
+        var $btn = $(this).button('loading')
+      $.getJSON($SCRIPT_ROOT + '/_collect_was', {
+        was_inven: $(this).attr("was_inven"),
+        prf_name: $(this).attr("prf_name"),
+        srv_name: $(this).attr("srv_name")
+      }, function(data) {
+        <!--$.each(data.result, function(i, item){-->
+
+         <!--});-->
+         $btn.button('reset')
+         console.log("was collect return do")
+         console.log(data.result)
+      });
+      return false;
+    });
+  });
+
+
+</script>
 {% endblock %}

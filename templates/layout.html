@@ -4,15 +4,44 @@
     <meta charset="utf-8">
     <title>{{ title }}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
     <script src="{{ url_for('static', filename='js/jquery.js') }}"></script>
     <script src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script>
 </head>
-<body>
-<nav class="navbar navbar-default">
-    <div class="container">
-        <div class="navbar-header"><a class="navbar-brand" href="{{ url_for('get_all_system') }}">zxyx</a></div>
-    </div>
-</nav>
+<div class="collapse navbar-collapse navbar-default">
+    <ul class="nav navbar-nav">
+        <li><a class="navbar-brand" href="{{ url_for('get_all_system') }}">zxyx</a></li>
+        <li class="dropdown">
+            <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true"
+               aria-expanded="false">Tools <span class="caret"></span></a>
+            <ul class="dropdown-menu">
+                <li><a href="{{ url_for('tivoli') }}">Tivoli</a></li>
+                <li><a href="#">Another action</a></li>
+                <li><a href="#">Something else here</a></li>
+            </ul>
+        </li>
+    </ul>
+</div>
+{% with messages = get_flashed_messages(with_categories=true) %}
+{% if messages %}
+
+{% for category, message in messages %}
+{% if category == "success" %}
+<div class="alert alert-success" role="alert">
+    {{ message }}
+</div>
+{% elif category == "error" %}
+<div class="alert alert-danger" role="alert">
+    {{ message }}
+</div>
+{% else %}
+<div class="alert alert-warning" role="alert">
+    {{ message }}
+</div>
+{% endif%}
+{% endfor %}
+
+{% endif %}
+{% endwith %}
 {% block body %}
 {% endblock %}
-</body>

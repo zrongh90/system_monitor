@@ -1,52 +1,43 @@
 # -*- coding: UTF-8 -*-
 from modules import db, System, WebSphere, DB2
-from flask import render_template
+
+
+DEBUG = True
+
+
+def my_log(my_log_messages):
+    if DEBUG:
+        print(my_log_messages)
+
+
+def inventory_db2_ansible_update(db2_info_list=None, inventory=None):
+    my_log("run into db2 info update")
+    for one_db in db2_info_list:
+        inst_name_in = one_db["inst_name"]
+        db_name_in = one_db["db_str"]
+        listen_port_in = one_db["port_ouput"]
+        new_db2 = DB2(inst_name=inst_name_in, db_name=db_name_in, listen_port=int(listen_port_in),
+                      sys_inventory=str(inventory))
+        my_log(new_db2)
+        db.session.add(new_db2)
 
 
 def inventory_was_ansible_update(was_info_list=None, inventory=None):
-    print("run into was info update")
+    my_log("run into was info update")
     for one_was in was_info_list:
-        if one_was.split('|').__len__() != 4 or one_was.find("servers") == -1:
-            print("Error to parse was detail")
-            return render_template("500.html") 
-        _, was, max_mem, curr_mem = one_was.split('|')
-	print("do with " + one_was)
-        prf_path, server = was.split('=')[1].replace('configuration', '').split('servers')
-        max_mem_in = max_mem.replace('-Xmx', '').replace('m', '')
-        curr_mem_in = curr_mem.replace('mem%', '')
-        prf_name_in = prf_path
-        srv_name_in = server.replace('/', '')
-        new_was = WebSphere(max_mem=int(max_mem_in), curr_mem=float(curr_mem_in), prf_name=prf_name_in, srv_name=srv_name_in,
+        prf_name_in = one_was['prf_path']
+        curr_mem_in = one_was['mem']
+        max_mem_in = one_was['max_mem']
+        srv_name_in = one_was['srv_name']
+        new_was = WebSphere(max_mem=int(max_mem_in), curr_mem=float(curr_mem_in), prf_name=prf_name_in,
+                            srv_name=srv_name_in,
                             sys_inventory=str(inventory))
-	print(new_was)
-        print("insert new was object into database")
+        my_log(new_was)
+        my_log("insert new was object into database")
         db.session.add(new_was)
 
 
-def ansible_get(component=None, inventory=None):
-    sys_info = None
-    was_info_list = None
-    was_info = [u'|-Dosgi.configuration.area=/o2oAppNode01/servers/o2onode03_cust/configuration|-Xmx4096m|mem%9.0',
-                u'|-Dosgi.configuration.area=/o2oAppNode01/servers/o2onode03_busi/configuration|-Xmx4096m|mem%6.0',
-                u'|-Dosgi.configuration.area=/o2oAppNode01/servers/o2onode03_pay/configuration|-Xmx2048m|mem%6.5',
-                u'|-Dosgi.configuration.area=/o2oAppNode01/servers/o2onode03_ycyw/configuration|-Xmx2048m|mem%6.2']
-    # db2_info_list = None
-    # initial one was object and save to database
-    for one_was in was_info:
-        _, was, max_mem, curr_mem = one_was.split('|')
-        prf_path, server = was.split('=')[1].replace('configuration', '').split('servers')
-        max_mem_in = max_mem.replace('-Xmx', '').replace('m', '')
-        curr_mem_in = curr_mem.replace('mem%', '')
-        prf_name_in = prf_path
-        srv_name_in = server.replace('/', '')
-        new_was = WebSphere(max_mem=max_mem_in, curr_mem=curr_mem_in,
-                            prf_name=prf_name_in, srv_name=srv_name_in, sys_inventory=inventory)
-        # db.session.add(new_was)
-
-        # TODO: ansible get function，return System/WebSphere/DB2 object
-        # info_update(inventory, sys_info, was_info_list, db2_info_list)
-
-
+# TODO: update system info
 def sys_update(system_info, new_sys_info):
     if system_info is None:
         exit(1)
@@ -78,3 +69,6 @@ def info_update(inventory=None, new_sys_info=None, websphere_list=None, db2_list
     sys_update(system_info, new_sys_info)
     was_update(inventory, websphere_list)
     db2_update(inventory, db2_list)
+
+
+

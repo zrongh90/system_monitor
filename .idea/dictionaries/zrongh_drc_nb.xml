@@ -5,10 +5,18 @@
       <w>elif</w>
       <w>endblock</w>
       <w>endfor</w>
+      <w>endwith</w>
+      <w>inven</w>
+      <w>passwd</w>
       <w>serializeable</w>
+      <w>sqlalchemy</w>
+      <w>sqlite</w>
+      <w>sudo</w>
       <w>tablename</w>
       <w>thead</w>
+      <w>tivoli</w>
       <w>websphere</w>
+      <w>zxyx</w>
     </words>
   </dictionary>
 </component>

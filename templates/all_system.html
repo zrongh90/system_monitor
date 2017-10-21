@@ -1,27 +1,28 @@
 {% extends "layout.html" %}
 {% block body %}
+<body>
 <div class="container theme-showcase">
-<form class="form-inline" action="{{ url_for('get_filter_system') }}" method=post>
-    <div class="form-group">
-    <label>inventory</label>
-    <input type="text" class="form-control" id="inventory_filter_id" placeholder="inven_filter"
-           name="inventory_filter" value={{ inventory_filter_val }} >
-	<div class="form-group">
-		<label>os_filter</label>
-		<select class="form-control" name="os_filter">
-                <option>all</option>
-            {% for os in os_list_val %}
-            {% if os == os_filter_val %}
-                <option selected="selected" value="{{ os }}">{{ os }}</option>
-            {% else %}
-                <option value="{{ os }}">{{ os }}</option>
-            {% endif %}
-            {% endfor %}
-		</select>
-	</div>
-    </div>
-    <button type="submit" class="btn btn-default">filter</button>
-  </form>
+    <form class="form-inline" action="{{ url_for('get_filter_system') }}" method=post>
+        <div class="form-group">
+            <label>inventory</label>
+            <input type="text" class="form-control" id="inventory_filter_id" placeholder="inven_filter"
+                   name="inventory_filter" value={{ inventory_filter_val }}>
+            <div class="form-group">
+                <label>os_filter</label>
+                <select class="form-control" name="os_filter">
+                    <option>all</option>
+                    {% for os in os_list_val %}
+                    {% if os == os_filter_val %}
+                    <option selected="selected" value="{{ os }}">{{ os }}</option>
+                    {% else %}
+                    <option value="{{ os }}">{{ os }}</option>
+                    {% endif %}
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+        <button type="submit" class="btn btn-default">filter</button>
+    </form>
     <table class="table">
         <thead>
         <tr>
@@ -45,15 +46,15 @@
             <td>{{ x.cpu_num }}</td>
             <td>
                 <a tabindex="0" role="button" title="WAS信息" data-toggle="popover"
-                     data-placement="right" class="inventory_for_was" data-trigger="focus"
-                     data-content="" data-delay=200 value="{{ x.inventory }}">
+                   data-placement="right" class="inventory_for_was" data-trigger="focus"
+                   data-content="" data-delay=200 value="{{ x.inventory }}">
                     {% if sys_was_count_list[loop.index0] > 0 %}
                     {{ sys_was_count_list[loop.index0] }} was
                     {% endif %}
                 </a>
                 <a tabindex="0" role="button" title="DB2信息" data-toggle="popover"
-                     data-placement="right" class="inventory_for_db2" data-trigger="focus"
-                     data-content="" data-delay=200 value="{{ x.inventory }}">
+                   data-placement="right" class="inventory_for_db2" data-trigger="focus"
+                   data-content="" data-delay=200 value="{{ x.inventory }}">
                     {% if sys_db2_count_list[loop.index0] > 0 %}
                     {{ sys_db2_count_list[loop.index0] }} db2
                     {% endif %}
@@ -68,10 +69,11 @@
     {% import '_macro.html' as macros %}
     {% if pagination and inventory_filter_val == "" %}
     {{ macros.render_pagination(pagination,'get_all_system',inventory_filter_val, os_filter_val) }}
-        {% elif  inventory_filter_val is not none %}
-        {{ macros.render_pagination(pagination,'get_filter_system',inventory_filter_val, os_filter_val) }}
+    {% elif inventory_filter_val is not none %}
+    {{ macros.render_pagination(pagination,'get_filter_system',inventory_filter_val, os_filter_val) }}
     {% endif %}
 </div>
+</body>
 <script type=text/javascript>
  $SCRIPT_ROOT = {{ request.script_root|tojson|safe }};
   $(function() {
@@ -114,5 +116,6 @@
       return false;
     }).popover({html : true });
   });
+
 </script>
 {% endblock %}

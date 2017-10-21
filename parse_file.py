@@ -21,17 +21,20 @@ def main_parse():
 if __name__ == '__main__':
     system_list = main_parse()
     #from db_utils import DBSession
-    one_was = WebSphere(max_mem=2048, curr_mem=1024, prf_name="profile2", srv_name="server2", sys_inventory="10.8.5.34")
-    two_was = WebSphere(max_mem=2048, curr_mem=1024, prf_name="profile1", srv_name="server1", sys_inventory="192.168.2.69")
-    three_was = WebSphere(max_mem=2048, curr_mem=1014, prf_name="profile3", srv_name="server3", sys_inventory="10.8.5.34")
+    #one_was = WebSphere(max_mem=2048, curr_mem=1024, prf_name="profile2", srv_name="server2", sys_inventory="10.8.5.34")
+    #two_was = WebSphere(max_mem=2048, curr_mem=1024, prf_name="profile1", srv_name="server1", sys_inventory="192.168.2.69")
+    #three_was = WebSphere(max_mem=2048, curr_mem=1014, prf_name="profile3", srv_name="server3", sys_inventory="10.8.5.34")
 
-    one_db2 = DB2(sys_inventory="11.8.8.220", inst_name="test_inst", db_name="test_db", listen_port=50002)
+    #one_db2 = DB2(sys_inventory="11.8.8.220", inst_name="test_inst", db_name="test_db", listen_port=50002)
     #session = DBSession()
-    db.session.add(three_was)
+    #db.session.add(three_was)
     #db.session.add(one_db2)
+    system_list_in = db.session.query(System).all()
+    for system in system_list_in:
+	db.session.delete(system)
     db.session.add_all(system_list)
-    db.session.add(one_was)
-    db.session.add(two_was)
+    #db.session.add(one_was)
+    #db.session.add(two_was)
     #systems = session.query(System).all()
     #print(systems)
     #was = session.query(WebSphere).all()
