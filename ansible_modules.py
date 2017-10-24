@@ -1,3 +1,4 @@
+# -*- coding: UTF-8 -*-
 #!/usr/bin/env python
 
 import sys
@@ -22,6 +23,21 @@ REPORTER_INVENTORY = u'10.8.1.86'
 REPORTER_USER = u'db2inst1'
 # TODO: use pycrypto module to encode the password
 REPORTER_PASSWD = u'passw0rd'
+return_json_str = None
+
+
+class TivoliResultCallback(CallbackBase):
+    host_ok = []
+
+    def _init_(self, *args, **kwargs):
+        self.host_ok = []
+
+    def v2_runner_on_ok(self, result, **kwargs):
+        my_log(result._result['stdout_lines'])
+        self.host_ok = result._result['stdout_lines']
+
+    def get_host_ok(self):
+        return self.host_ok
 
 
 # ansible callback method for details_ansible_run method to
@@ -67,6 +83,7 @@ def ansible_run_api(inventory_in, tasks_list, call_back_class, input_options, in
     options = input_options
 
     passwords = input_passwd_dict
+    my_log(passwords)
 
     # create inventory and pass to var manager
     inventory = Inventory(loader=loader, variable_manager=variable_manager, host_list=host_list)
@@ -96,9 +113,11 @@ def ansible_run_api(inventory_in, tasks_list, call_back_class, input_options, in
 
         )
         result = tqm.run(play)
+        return_host_ok = tqm._stdout_callback.get_host_ok()
     finally:
         if tqm is not None:
             tqm.cleanup()
+    return return_host_ok
 
 
 def get_default_option():
@@ -136,7 +155,7 @@ def tivoli_ansible_run(tivoli_clear_shell):
     """
     inventory_in = REPORTER_INVENTORY
     in_remote_user = 'db2inst1'
-    in_dict_passwd = dict(sshpass=REPORTER_PASSWD)
+    in_dict_passwd = dict(conn_pass=REPORTER_PASSWD)
     tasks_list = [dict(action=dict(module='shell', args=tivoli_clear_shell))]
     Options = namedtuple('Options',
                          ['connection', 'module_path', 'forks', 'sudo', 'remote_user', 'become', 'become_method',
@@ -144,7 +163,7 @@ def tivoli_ansible_run(tivoli_clear_shell):
     my_options = Options(connection=C.DEFAULT_TRANSPORT, module_path=None, forks=100, sudo=None,
                          remote_user=in_remote_user, become=None, become_method=None,
                          become_user=None, check=False)
-    ansible_run_api(inventory_in, tasks_list, my_options, in_dict_passwd)
+    return ansible_run_api(inventory_in, tasks_list, TivoliResultCallback(), my_options, in_dict_passwd)
 
 
 def ansible_collect(inventory_in, collect_cmd_str):
@@ -159,6 +178,9 @@ def ansible_collect(inventory_in, collect_cmd_str):
 
 
 if __name__ == '__main__':
-    details_ansible_run("192.168.3.145")
-    details_ansible_run("10.8.5.35")
-    details_ansible_run("10.8.5.46")
+    #details_ansible_run("192.168.3.145")
+    #details_ansible_run("10.8.5.35")
+    #details_ansible_run("10.8.5.46")
+    return_host_ok = tivoli_ansible_run("python /home/db2inst1/alert_ctl.py content Ethernet110/1/20端口运行状态改变")
+    print(return_host_ok)
+    # print(return_str)

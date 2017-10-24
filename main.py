@@ -8,6 +8,7 @@ from time import sleep
 from modules import System, WebSphere, DB2, app, db
 
 # from ansible_modules import ansible_run
+# from ansible_modules import tivoli_ansible_run
 from utils import my_log
 
 NUM_PER_PAGE = 11
@@ -145,24 +146,29 @@ def clear_tivoli_alert(event_id=None, event_ip=None, event_content=None):
     :param event_content: 事件内容
     :return: result: 清理结果
     """
+    tivoli_python_path = "python /home/db2inst1/alert_ctl.py "
     my_log("run into tivoli alert clear")
-    event_id = request.form.get('event_id', 0, type=int)
+    # TODO: 多条件匹配问题，需要将获取数据分割，同时将ansible操作剥离
+    event_id = request.form.get('event_id', None, type=str)
     event_ip = request.form.get('event_ip', None, type=str)
     event_content = request.form.get('event_content', None, type=str)
     if event_id:
         my_log(event_id)
-        sleep(5)
-        msg = "success update tivoli for event_id: " + str(event_id)
-        flash(msg, 'success')
+        condition = " id " + str(event_id)
     if event_ip:
         my_log(event_ip)
-        sleep(5)
-        msg = "success update tivoli for event_ip: " + str(event_ip)
-        flash(msg, 'success')
+        condition = " ip " + event_ip
     if event_content:
         my_log(event_content)
-        sleep(5)
-        msg = "success update tivoli for event_content: " + str(event_content)
+    condition = " content \"" + event_content + "\""
+    tivoli_cmd = tivoli_python_path + condition
+    my_log(tivoli_cmd)
+    # return_host_ok = tivoli_ansible_run(tivoli_cmd)
+    return_host_ok = []
+    if len(return_host_ok) == 0:
+        flash("no record match event: " + event_content, 'info')
+    for msg in return_host_ok:
+        # msg = "success update tivoli for event_content: " + str(event_content)
         flash(msg, 'success')
     return redirect(url_for('tivoli'))
     # return render_template("tivoli.html")
