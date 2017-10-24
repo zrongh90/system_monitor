@@ -3,15 +3,23 @@ from flask import render_template, request, jsonify, url_for, flash
 from sqlalchemy import distinct
 from werkzeug.utils import redirect
 from time import sleep
+import logging.handlers
 
 # from ansible_modules import ansible_collect
 from modules import System, WebSphere, DB2, app, db
 
 # from ansible_modules import ansible_run
 # from ansible_modules import tivoli_ansible_run
-from utils import my_log
 
 NUM_PER_PAGE = 11
+LOG_FILE = 'main.log'
+
+handler = logging.handlers.RotatingFileHandler(LOG_FILE, maxBytes=1024*1024, backupCount=5)
+fmt = "%(asctime)s - %(filename)s:%(lineno)s - %(module)s:%(funcName)s - %(message)s"
+formatter = logging.Formatter(fmt)
+handler.setFormatter(formatter)
+handler.setLevel(logging.DEBUG)
+app.logger.addHandler(handler)
 
 
 @app.errorhandler(404)
@@ -64,19 +72,19 @@ def get_filter_system(inventory_filter=None, os_filter=None):
     :param os_filter: 操作系统类型过滤器
     :return: details.html
     """
-    my_log("filter")
+    app.logger.debug("filter")
     sys_was_count_list = []
     sys_db2_count_list = []
     if request.method == 'POST':
         inventory_filter = request.form['inventory_filter']
         os_filter = request.form['os_filter']
-        my_log("POST")
+        app.logger.debug("POST")
     elif request.method == 'GET':
         inventory_filter = request.args.get('inventory_filter')
         os_filter = request.args.get('os_filter')
-        my_log("GET")
-    my_log("inventory_filter:" + inventory_filter)
-    my_log("os_filter:" + os_filter)
+        app.logger.debug("GET")
+    app.logger.debug("inventory_filter:" + inventory_filter)
+    app.logger.debug("os_filter:" + os_filter)
     page = request.args.get('page', 1, type=int)
     # 对结果进行分页
     if os_filter == "all":
@@ -91,7 +99,7 @@ def get_filter_system(inventory_filter=None, os_filter=None):
         sys_was_count_list.append(sys_was_count)
         sys_db2_count_list.append(sys_db2_count)
     db.session.close()
-    my_log(systems)
+    app.logger.debug(systems)
     return render_template("all_system.html", inventory_filter_val=inventory_filter, title="主机信息列表",
                            system_list=systems, pagination=paginate, os_filter_val=os_filter, os_list_val=get_os_list(),
                            sys_was_count_list=sys_was_count_list, sys_db2_count_list=sys_db2_count_list)
@@ -110,7 +118,7 @@ def detail(inventory=None):
         was_detail = WebSphere.query.filter_by(sys_inventory=inventory).all()
         db2_detail = DB2.query.filter_by(sys_inventory=inventory).all()
         # 删除数据库中目前有的was信息
-        my_log("remove current websphere info")
+        app.logger.debug("remove current websphere info")
         # for one_was in was_detail:
         #     db.session.delete(one_was)
         # for one_db2 in db2_detail:
@@ -121,12 +129,12 @@ def detail(inventory=None):
         # db.session.commit()
         new_was_detail = WebSphere.query.filter_by(sys_inventory=inventory).all()
         new_db2_detail = DB2.query.filter_by(sys_inventory=inventory).all()
-        my_log(new_db2_detail)
+        app.logger.debug(new_db2_detail)
         return render_template("details.html", title="具体信息", system_detail_in=system_detail,
                                was_detail_in=new_was_detail,
                                db2_detail_in=new_db2_detail)
     except Exception as e:
-        my_log(e)
+        app.logger.debug(e)
         # 更新失败，立刻回滚
         db.session.rollback()
         return render_template("500.html")
@@ -135,6 +143,24 @@ def detail(inventory=None):
 @app.route('/tivoli')
 def tivoli():
     return render_template("tivoli.html")
+
+
+def deal_tivoli_condition(in_condition):
+    """
+    处理清理tivoli报警的抽象方法
+    :param in_condition: 具体操作语句，例如" id 12345"或" content 测试"等
+    :return:
+    """
+    tivoli_python_path = "python /home/db2inst1/alert_ctl.py "
+    tivoli_cmd = tivoli_python_path + in_condition
+    app.logger.debug(tivoli_cmd)
+    # return_host_ok = tivoli_ansible_run(tivoli_cmd)
+    return_host_ok = []
+    if len(return_host_ok) == 0:
+        flash("no record match event: " + in_condition, 'info')
+    for msg in return_host_ok:
+        # msg = "success update tivoli for event_content: " + str(event_content)
+        flash(msg, 'success')
 
 
 @app.route('/clear_tivoli_alert', methods=['POST'])
@@ -146,32 +172,27 @@ def clear_tivoli_alert(event_id=None, event_ip=None, event_content=None):
     :param event_content: 事件内容
     :return: result: 清理结果
     """
-    tivoli_python_path = "python /home/db2inst1/alert_ctl.py "
-    my_log("run into tivoli alert clear")
-    # TODO: 多条件匹配问题，需要将获取数据分割，同时将ansible操作剥离
+
+    app.logger.debug("run into tivoli alert clear")
     event_id = request.form.get('event_id', None, type=str)
     event_ip = request.form.get('event_ip', None, type=str)
     event_content = request.form.get('event_content', None, type=str)
-    if event_id:
-        my_log(event_id)
-        condition = " id " + str(event_id)
-    if event_ip:
-        my_log(event_ip)
-        condition = " ip " + event_ip
-    if event_content:
-        my_log(event_content)
-    condition = " content \"" + event_content + "\""
-    tivoli_cmd = tivoli_python_path + condition
-    my_log(tivoli_cmd)
-    # return_host_ok = tivoli_ansible_run(tivoli_cmd)
-    return_host_ok = []
-    if len(return_host_ok) == 0:
-        flash("no record match event: " + event_content, 'info')
-    for msg in return_host_ok:
-        # msg = "success update tivoli for event_content: " + str(event_content)
-        flash(msg, 'success')
+    if len(event_id):
+        for one_id in event_id.split(','):
+            if one_id.isdigit():
+                condition = " id " + str(one_id)
+                deal_tivoli_condition(condition)
+            else:
+                flash("Alert ID: " + one_id + " not allow", 'error')
+    if len(event_ip):
+        for one_ip in event_ip.split(','):
+            condition = " ip " + str(one_ip)
+            deal_tivoli_condition(condition)
+    if len(event_content):
+        for one_content in event_content.split(','):
+            condition = " content \" " + str(one_content) + "\""
+            deal_tivoli_condition(condition)
     return redirect(url_for('tivoli'))
-    # return render_template("tivoli.html")
 
 
 # 通过jquery获取系统的WAS信息
@@ -180,7 +201,7 @@ def clear_tivoli_alert(event_id=None, event_ip=None, event_content=None):
 @app.route('/_get_was')
 def jquery_get_was_info():
     inventory_input = request.args.get('invent_val', 0, type=str)
-    my_log("inventory_input:" + inventory_input)
+    app.logger.debug("inventory_input:" + inventory_input)
     was_detail = WebSphere.query.filter_by(sys_inventory=inventory_input)
     return jsonify(result=[i.serialize for i in was_detail.all()])
 
@@ -191,7 +212,7 @@ def jquery_get_was_info():
 @app.route('/_get_db2')
 def jquery_get_db2_info():
     inventory_input = request.args.get('invent_val', None, type=str)
-    my_log("inventory_input:" + inventory_input)
+    app.logger.debug("inventory_input:" + inventory_input)
     db2_detail = DB2.query.filter_by(sys_inventory=inventory_input)
     return jsonify(result=[i.serialize for i in db2_detail.all()])
 
@@ -203,9 +224,9 @@ def jquery_collect_system(sys_inven=None):
     :param sys_inven: 目标主机IP
     :return: result: 收集结果
     """
-    my_log("into system perf collect!")
+    app.logger.debug("into system perf collect!")
     sys_inven = request.args.get('sys_inven', None, type=str)
-    my_log("do with inventory:" + sys_inven)
+    app.logger.debug("do with inventory:" + sys_inven)
     # TODO: call ansible api to run linux_perf script
     sleep(5)
     return jsonify(result="success")
@@ -225,7 +246,7 @@ def jquery_collect_db2(db_inven=None, db_name=None, inst_name=None):
     inst_name = request.args.get('inst_name', None, type=str)
     db2_collect_cmd_str = "su - " + inst_name + " -c \"/zxyx/collect/get_db2_log.sh " + inst_name \
                           + " \'\' " + db_name + "\""
-    my_log(db2_collect_cmd_str)
+    app.logger.debug(db2_collect_cmd_str)
     # TODO: call ansible to run command to collect db2 snapshot and pd
     # ansible_collect(db_inven, db2_collect_cmd_str)
     # return jsonify(result=[i.serialize for i in db2_detail.all()])
@@ -245,7 +266,7 @@ def jquery_collect_was(was_inven=None, prf_name=None, srv_name=None):
     was_inven = request.args.get('was_inven', None, type=str)
     prf_name = request.args.get('prf_name', None, type=str)
     srv_name = request.args.get('srv_name', None, type=str)
-    my_log(was_inven + ' ' + prf_name + ' ' + srv_name)
+    app.logger.debug(was_inven + ' ' + prf_name + ' ' + srv_name)
     sleep(5)
     return jsonify(result="success")
 

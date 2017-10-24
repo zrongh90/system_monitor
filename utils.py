@@ -1,13 +1,5 @@
 # -*- coding: UTF-8 -*-
-from modules import db, System, WebSphere, DB2
-
-
-DEBUG = True
-
-
-def my_log(my_log_messages):
-    if DEBUG:
-        print(my_log_messages)
+from modules import db, System, WebSphere, DB2, app
 
 
 def inventory_db2_ansible_update(db2_info_list=None, inventory=None):
@@ -17,14 +9,14 @@ def inventory_db2_ansible_update(db2_info_list=None, inventory=None):
     :param inventory:  目标系统IP
     :return: None
     """
-    my_log("run into db2 info update")
+    app.logger.debug("run into db2 info update")
     for one_db in db2_info_list:
         inst_name_in = one_db["inst_name"]
         db_name_in = one_db["db_str"]
         listen_port_in = one_db["port_ouput"]
         new_db2 = DB2(inst_name=inst_name_in, db_name=db_name_in, listen_port=int(listen_port_in),
                       sys_inventory=str(inventory))
-        my_log(new_db2)
+        app.logger.debug(new_db2)
         db.session.add(new_db2)
 
 
@@ -35,7 +27,7 @@ def inventory_was_ansible_update(was_info_list=None, inventory=None):
     :param inventory: 目标系统IP
     :return: None
     """
-    my_log("run into was info update")
+    app.logger.debug("run into was info update")
     for one_was in was_info_list:
         prf_name_in = one_was['prf_path']
         curr_mem_in = one_was['mem']
@@ -44,8 +36,8 @@ def inventory_was_ansible_update(was_info_list=None, inventory=None):
         new_was = WebSphere(max_mem=int(max_mem_in), curr_mem=float(curr_mem_in), prf_name=prf_name_in,
                             srv_name=srv_name_in,
                             sys_inventory=str(inventory))
-        my_log(new_was)
-        my_log("insert new was object into database")
+        app.logger.debug(new_was)
+        app.logger.debug("insert new was object into database")
         db.session.add(new_was)
 
 

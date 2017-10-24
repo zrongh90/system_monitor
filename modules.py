@@ -85,5 +85,7 @@ class DB2(db.Model):
             self.sys_inventory, self.db2_info_id, self.inst_name, self.db_name, self.listen_port)
 
 
+
+
 if __name__ == '__main__':
     db.create_all()
