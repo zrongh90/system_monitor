@@ -15,7 +15,8 @@ from ansible.plugins.callback import CallbackBase
 from ansible import constants as C
 
 # ansible default ssh user,need to be combined with the configuration 'permissions'.
-from utils import inventory_was_ansible_update, inventory_db2_ansible_update, my_log
+from modules import app
+from utils import inventory_was_ansible_update, inventory_db2_ansible_update
 
 # script in target machine to return websphere info
 INFO_GET_SCRIPT = u'python /zxyx/utils/get_component.py'
@@ -23,67 +24,69 @@ REPORTER_INVENTORY = u'10.8.1.86'
 REPORTER_USER = u'db2inst1'
 # TODO: use pycrypto module to encode the password
 REPORTER_PASSWD = u'passw0rd'
+GATHER_FACTS = u'yes'
+NOT_GATHER_FACTS = u'no'
 return_json_str = None
 
 
-class TivoliResultCallback(CallbackBase):
-    host_ok = []
+class ResultCallback(CallbackBase):
+    """
+    ansible的默认回调处理方法，针对不同的结果写入字典中
+    """
+    host_ok = {}
 
     def _init_(self, *args, **kwargs):
-        self.host_ok = []
+        self.host_ok = {}
 
     def v2_runner_on_ok(self, result, **kwargs):
-        my_log(result._result['stdout_lines'])
-        self.host_ok = result._result['stdout_lines']
+        if "stdout_lines" in result._result:
+            app.logger.debug(result._result['stdout_lines'])
+            self.host_ok["stdout_lines"] = result._result["stdout_lines"]
+            self.host_ok["host"] = result._host
+        elif "ansible_facts" in result._result:
+            app.logger.debug(result._result["ansible_facts"])
+            self.host_ok["ansible_facts"] = result._result["ansible_facts"]
 
     def get_host_ok(self):
         return self.host_ok
 
 
-# ansible callback method for details_ansible_run method to
-# supdate the was and db2 modules for select inventory
-class DetailResultCallback(CallbackBase):
-    """
-    ansible callback method for details_ansible_run method to
-    supdate the was and db2 modules for select inventory
-    """
-    # TODO: use gather facts to update system info
-    def v2_runner_on_ok(self, result, **kwargs):
-        host = result._host
-        component_info_list = result._result['stdout_lines']
-        for one_component in component_info_list:
-            one_component_dict = eval(one_component)
-            was_json = json.loads(one_component_dict['was'])
-            if was_json["status"] == "success":
-                inventory_was_ansible_update(was_json["msg"], host)
-            db2_json = json.loads(one_component_dict['db2'])
-            if db2_json["status"] == "success":
-                inventory_db2_ansible_update(db2_json["msg"], host)
+# class DetailResultCallback(CallbackBase):
+#     # TODO: use gather facts to update system info
+#     def v2_runner_on_ok(self, result, **kwargs):
+#         host = result._host
+#         if "ansible_facts" in result._result:
+#             inventory_sys_ansible_update()
+#         component_info_list = result._result['stdout_lines']
+#         for one_component in component_info_list:
+#             one_component_dict = eval(one_component)
+#             was_json = json.loads(one_component_dict['was'])
+#             if was_json["status"] == "success":
+#                 inventory_was_ansible_update(was_json["msg"], host)
+#             db2_json = json.loads(one_component_dict['db2'])
+#             if db2_json["status"] == "success":
+#                 inventory_db2_ansible_update(db2_json["msg"], host)
 
-
-def ansible_run_api(inventory_in, tasks_list, call_back_class, input_options, input_passwd_dict):
+def ansible_run_api(inventory_in, tasks_list, input_options, input_passwd_dict, is_gather_facts):
     """
     Ansible api to other method to call
+    :param is_gather_facts:
     :param inventory_in: IP to connect to run task
     :param tasks_list: tasks to run
-    :param call_back_class: how to deal with target's return
     :param input_options: ansible options, such as become,forks,remote_user etc
     :param input_passwd_dict: password for target
     :return:
     """
     host_list = [inventory_in]
 
-    my_log("ansible run")
-    my_log("inventory_in: " + inventory_in)
+    app.logger.debug("ansible run")
+    app.logger.debug("inventory_in: " + inventory_in)
 
     # initialize needed objects
     variable_manager = VariableManager()
     loader = DataLoader()
-
     options = input_options
-
     passwords = input_passwd_dict
-    my_log(passwords)
 
     # create inventory and pass to var manager
     inventory = Inventory(loader=loader, variable_manager=variable_manager, host_list=host_list)
@@ -93,7 +96,7 @@ def ansible_run_api(inventory_in, tasks_list, call_back_class, input_options, in
     play_source = dict(
         name='ansible run',
         hosts='all',
-        gather_facts="no",
+        gather_facts=is_gather_facts,
         tasks=tasks_list
     )
     play = Play().load(play_source, variable_manager=variable_manager, loader=loader)
@@ -101,7 +104,7 @@ def ansible_run_api(inventory_in, tasks_list, call_back_class, input_options, in
     # actually run it
     tqm = None
 
-    results_callback = call_back_class
+    results_callback = ResultCallback()
     try:
         tqm = TaskQueueManager(
             inventory=inventory,
@@ -110,14 +113,13 @@ def ansible_run_api(inventory_in, tasks_list, call_back_class, input_options, in
             options=options,
             passwords=passwords,
             stdout_callback=results_callback,
-
         )
         result = tqm.run(play)
-        return_host_ok = tqm._stdout_callback.get_host_ok()
+        host_ok_result = tqm._stdout_callback.get_host_ok()
     finally:
         if tqm is not None:
             tqm.cleanup()
-    return return_host_ok
+    return host_ok_result
 
 
 def get_default_option():
@@ -134,7 +136,7 @@ def get_default_option():
     my_options = Options(connection=C.DEFAULT_TRANSPORT, module_path=None, forks=100, sudo=None,
                          remote_user=in_remote_user, become=in_is_become, become_method=in_become_method,
                          become_user=in_become_user, check=False)
-    return my_options, dict(vault_pass='secret')
+    return my_options
 
 
 def details_ansible_run(inventory_in):
@@ -144,7 +146,8 @@ def details_ansible_run(inventory_in):
     :returns None
     """
     tasks_list = [dict(action=dict(module='shell', args=INFO_GET_SCRIPT))]
-    ansible_run_api(inventory_in, tasks_list, DetailResultCallback(), get_default_option())
+    return ansible_run_api(inventory_in, tasks_list, get_default_option(), dict(vault_pass='secret'),
+                    GATHER_FACTS)
 
 
 def tivoli_ansible_run(tivoli_clear_shell):
@@ -163,7 +166,7 @@ def tivoli_ansible_run(tivoli_clear_shell):
     my_options = Options(connection=C.DEFAULT_TRANSPORT, module_path=None, forks=100, sudo=None,
                          remote_user=in_remote_user, become=None, become_method=None,
                          become_user=None, check=False)
-    return ansible_run_api(inventory_in, tasks_list, TivoliResultCallback(), my_options, in_dict_passwd)
+    return ansible_run_api(inventory_in, tasks_list, my_options, in_dict_passwd, NOT_GATHER_FACTS)
 
 
 def ansible_collect(inventory_in, collect_cmd_str):
@@ -174,7 +177,7 @@ def ansible_collect(inventory_in, collect_cmd_str):
     :return:
     """
     tasks_list = [dict(action=dict(module='shell', args=collect_cmd_str))]
-    ansible_run_api(inventory_in, tasks_list, get_default_option())
+    ansible_run_api(inventory_in, tasks_list, get_default_option(), dict(vault_pass='secret'), NOT_GATHER_FACTS)
 
 
 if __name__ == '__main__':

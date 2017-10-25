@@ -8,11 +8,15 @@ import logging.handlers
 # from ansible_modules import ansible_collect
 from modules import System, WebSphere, DB2, app, db
 
-# from ansible_modules import ansible_run
-# from ansible_modules import tivoli_ansible_run
+
+from utils import detail_update
 
 NUM_PER_PAGE = 11
 LOG_FILE = 'main.log'
+PRODUCT = False
+# from ansible_modules import ansible_run
+if PRODUCT:
+    from ansible_modules import tivoli_ansible_run, details_ansible_run, ansible_collect
 
 handler = logging.handlers.RotatingFileHandler(LOG_FILE, maxBytes=1024*1024, backupCount=5)
 fmt = "%(asctime)s - %(filename)s:%(lineno)s - %(module)s:%(funcName)s - %(message)s"
@@ -117,19 +121,22 @@ def detail(inventory=None):
         system_detail = System.query.filter_by(inventory=inventory).first_or_404()
         was_detail = WebSphere.query.filter_by(sys_inventory=inventory).all()
         db2_detail = DB2.query.filter_by(sys_inventory=inventory).all()
-        # 删除数据库中目前有的was信息
-        app.logger.debug("remove current websphere info")
-        # for one_was in was_detail:
-        #     db.session.delete(one_was)
-        # for one_db2 in db2_detail:
-        #     db.session.delete(one_db2)
-        # call ansible function to retrieve websphere,db2,system info for target inventory
-        # current only realize get websphere info
-        # details_ansible_run(inventory_in=inventory)
-        # db.session.commit()
+
+        if PRODUCT:
+            # 删除数据库中目前有的was/db2信息
+            app.logger.debug("remove current WebSphere/DB2 info")
+            for one_was in was_detail:
+                db.session.delete(one_was)
+            for one_db2 in db2_detail:
+                db.session.delete(one_db2)
+            # call ansible function to retrieve websphere,db2,system info for target inventory
+            # current only realize get websphere info
+            details_host_ok = details_ansible_run(inventory_in=inventory)
+            detail_update(system_detail, details_host_ok)
+        db.session.commit()
+        # app.logger.debug(details_host_ok)
         new_was_detail = WebSphere.query.filter_by(sys_inventory=inventory).all()
         new_db2_detail = DB2.query.filter_by(sys_inventory=inventory).all()
-        app.logger.debug(new_db2_detail)
         return render_template("details.html", title="具体信息", system_detail_in=system_detail,
                                was_detail_in=new_was_detail,
                                db2_detail_in=new_db2_detail)
@@ -154,11 +161,12 @@ def deal_tivoli_condition(in_condition):
     tivoli_python_path = "python /home/db2inst1/alert_ctl.py "
     tivoli_cmd = tivoli_python_path + in_condition
     app.logger.debug(tivoli_cmd)
-    # return_host_ok = tivoli_ansible_run(tivoli_cmd)
-    return_host_ok = []
-    if len(return_host_ok) == 0:
+    return_host_ok = {"stdout_lines": ""}
+    if PRODUCT:
+        return_host_ok = tivoli_ansible_run(tivoli_cmd)
+    if len(return_host_ok["stdout_lines"]) == 0:
         flash("no record match event: " + in_condition, 'info')
-    for msg in return_host_ok:
+    for msg in return_host_ok["stdout_lines"]:
         # msg = "success update tivoli for event_content: " + str(event_content)
         flash(msg, 'success')
 
@@ -180,17 +188,17 @@ def clear_tivoli_alert(event_id=None, event_ip=None, event_content=None):
     if len(event_id):
         for one_id in event_id.split(','):
             if one_id.isdigit():
-                condition = " id " + str(one_id)
+                condition = " id " + str(one_id).strip()
                 deal_tivoli_condition(condition)
             else:
                 flash("Alert ID: " + one_id + " not allow", 'error')
     if len(event_ip):
         for one_ip in event_ip.split(','):
-            condition = " ip " + str(one_ip)
+            condition = " ip " + str(one_ip).strip()
             deal_tivoli_condition(condition)
     if len(event_content):
         for one_content in event_content.split(','):
-            condition = " content \" " + str(one_content) + "\""
+            condition = " content \"" + str(one_content).strip() + "\""
             deal_tivoli_condition(condition)
     return redirect(url_for('tivoli'))
 
@@ -248,10 +256,11 @@ def jquery_collect_db2(db_inven=None, db_name=None, inst_name=None):
                           + " \'\' " + db_name + "\""
     app.logger.debug(db2_collect_cmd_str)
     # TODO: call ansible to run command to collect db2 snapshot and pd
-    # ansible_collect(db_inven, db2_collect_cmd_str)
-    # return jsonify(result=[i.serialize for i in db2_detail.all()])
+    collect_result = []
+    if PRODUCT:
+        collect_result = ansible_collect(db_inven, db2_collect_cmd_str)
     sleep(2)
-    return jsonify(result="test")
+    return jsonify(result=collect_result)
 
 
 @app.route('/_collect_was')

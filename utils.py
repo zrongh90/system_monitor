@@ -1,5 +1,6 @@
 # -*- coding: UTF-8 -*-
 from modules import db, System, WebSphere, DB2, app
+import json
 
 
 def inventory_db2_ansible_update(db2_info_list=None, inventory=None):
@@ -41,7 +42,7 @@ def inventory_was_ansible_update(was_info_list=None, inventory=None):
         db.session.add(new_was)
 
 
-def sys_update(system_info, new_sys_info):
+def inventory_sys_ansible_update(system_info, ansible_facts_result):
     """
     更新系统信息
     :param system_info:
@@ -52,32 +53,21 @@ def sys_update(system_info, new_sys_info):
         exit(1)
     else:
         # update system info
-        system_info.hostname = new_sys_info.hostname
-        system_info.os_info = new_sys_info.os_info
-        system_info.platform = new_sys_info.platform
-        system_info.cpu_num = new_sys_info.cpu_num
-        db.session.commit()
+        system_info.hostname = ansible_facts_result.get("ansible_hostname")
+        system_info.os_info = ansible_facts_result.get("ansible_distribution_version")
+        system_info.platform = ansible_facts_result.get("ansible_product_name")
+        system_info.cpu_num = ansible_facts_result.get("ansible_processor_vcpus")
 
-
-# def was_update(inventory, new_was_info_list):
-#     was_info = db.session.query(WebSphere).filter(inventory=inventory).all()
-#     # delete was info in db, not need to keep old was info
-#     for one_was in was_info:
-#         db.session.delete(one_was)
-#     for one_new_was in new_was_info_list:
-#         db.session.add(one_new_was)
-#     db.session.commit()
-#
-#
-# def db2_update(inventory, db2_info_list):
-#     pass
-#
-#
-# def info_update(inventory=None, new_sys_info=None, websphere_list=None, db2_list=None):
-#     system_info = db.session.query(System).filter(inventory=inventory).first()
-#     sys_update(system_info, new_sys_info)
-#     was_update(inventory, websphere_list)
-#     db2_update(inventory, db2_list)
-
-
+def detail_update(sys_obj, details_host_ok):
+    ansible_stdout_lines = details_host_ok["stdout_lines"]
+    for one_component in ansible_stdout_lines:
+        one_component_dict = eval(one_component)
+        was_json = json.loads(one_component_dict["was"])
+        if was_json["status"] == "success":
+            inventory_was_ansible_update(was_json["msg"], details_host_ok["host"])
+            db2_json = json.loads(one_component_dict["db2"])
+        if db2_json["status"] == "success":
+            inventory_db2_ansible_update(db2_json["msg"], details_host_ok["host"])
+    ansible_facts = details_host_ok["ansible_facts"]
+    inventory_sys_ansible_update(sys_obj, ansible_facts)
 
