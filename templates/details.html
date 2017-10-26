@@ -84,18 +84,20 @@
             </thead>
             <tbody>
             {% for one_db2 in db2_detail_in %}
+		{% for one_db_name in one_db2.db_name.split(',') %}
             <tr>
                 <td>{{ one_db2.db2_info_id }}</td>
                 <td>{{ one_db2.inst_name }}</td>
-                <td>{{ one_db2.db_name }}</td>
+                <td>{{ one_db_name }}</td>
                 <td>{{ one_db2.listen_port }}</td>
                 <td>
                     <button type="button" classify="db2_collect" data-loading-text="Processing..."
                             class="btn btn-primary" autocomplete="off" db_inven="{{ system_detail_in.inventory }}"
-                            db_name="{{ one_db2.db_name }}" inst_name="{{ one_db2.inst_name }}">collect
+                            db_name="{{ one_db_name }}" inst_name="{{ one_db2.inst_name }}">collect
                     </button>
                 </td>
             </tr>
+		{% endfor %}
             {% endfor %}
             </tbody>
         </table>
@@ -119,6 +121,7 @@
          $btn.button('reset')
          console.log("return do")
          console.log(data.result)
+	 alert(data.result)
       });
       return false;
     });

@@ -50,23 +50,6 @@ class ResultCallback(CallbackBase):
     def get_host_ok(self):
         return self.host_ok
 
-
-# class DetailResultCallback(CallbackBase):
-#     # TODO: use gather facts to update system info
-#     def v2_runner_on_ok(self, result, **kwargs):
-#         host = result._host
-#         if "ansible_facts" in result._result:
-#             inventory_sys_ansible_update()
-#         component_info_list = result._result['stdout_lines']
-#         for one_component in component_info_list:
-#             one_component_dict = eval(one_component)
-#             was_json = json.loads(one_component_dict['was'])
-#             if was_json["status"] == "success":
-#                 inventory_was_ansible_update(was_json["msg"], host)
-#             db2_json = json.loads(one_component_dict['db2'])
-#             if db2_json["status"] == "success":
-#                 inventory_db2_ansible_update(db2_json["msg"], host)
-
 def ansible_run_api(inventory_in, tasks_list, input_options, input_passwd_dict, is_gather_facts):
     """
     Ansible api to other method to call
@@ -139,6 +122,17 @@ def get_default_option():
     return my_options
 
 
+def script_issue_ansible_run(inventory_in, script_name):
+    """
+    通过ansible进行脚本的下发到tmp目录，保存目标机器端的脚本与服务器一致
+    :param inventory_in: 需要下发的主机IP
+    :param script_name: 需要下发的脚本名称
+    :return:
+    """
+    # TODO: 完成脚本下发，先进行耦合度较低的脚本的下发
+    pass
+
+
 def details_ansible_run(inventory_in):
     """ Ansible method to get modules
     ansible method to get inventory's modules, currently support for db2 and was
@@ -177,7 +171,7 @@ def ansible_collect(inventory_in, collect_cmd_str):
     :return:
     """
     tasks_list = [dict(action=dict(module='shell', args=collect_cmd_str))]
-    ansible_run_api(inventory_in, tasks_list, get_default_option(), dict(vault_pass='secret'), NOT_GATHER_FACTS)
+    return ansible_run_api(inventory_in, tasks_list, get_default_option(), dict(vault_pass='secret'), NOT_GATHER_FACTS)
 
 
 if __name__ == '__main__':

@@ -8,7 +8,7 @@
             <input type="text" class="form-control" id="inventory_filter_id" placeholder="inven_filter"
                    name="inventory_filter" value={{ inventory_filter_val }}>
             <div class="form-group">
-                <label>os_filter</label>
+                <label>os_filter{{ os_filter_val }}</label>
                 <select class="form-control" name="os_filter">
                     <option>all</option>
                     {% for os in os_list_val %}
@@ -67,9 +67,9 @@
         </tbody>
     </table>
     {% import '_macro.html' as macros %}
-    {% if pagination and inventory_filter_val == "" %}
+    {% if pagination and inventory_filter_val == "" and os_filter_val == "" %}
     {{ macros.render_pagination(pagination,'get_all_system',inventory_filter_val, os_filter_val) }}
-    {% elif inventory_filter_val is not none %}
+    {% else %}
     {{ macros.render_pagination(pagination,'get_filter_system',inventory_filter_val, os_filter_val) }}
     {% endif %}
 </div>

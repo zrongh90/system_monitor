@@ -252,15 +252,15 @@ def jquery_collect_db2(db_inven=None, db_name=None, inst_name=None):
     db_inven = request.args.get('db_inven', None, type=str)
     db_name = request.args.get('db_name', None, type=str)
     inst_name = request.args.get('inst_name', None, type=str)
-    db2_collect_cmd_str = "su - " + inst_name + " -c \"/zxyx/collect/get_db2_log.sh " + inst_name \
+    db2_collect_cmd_str = "su - " + inst_name + " -c \"sh /zxyx/collect/get_db2_log.sh " + inst_name \
                           + " \'\' " + db_name + "\""
     app.logger.debug(db2_collect_cmd_str)
     # TODO: call ansible to run command to collect db2 snapshot and pd
     collect_result = []
     if PRODUCT:
         collect_result = ansible_collect(db_inven, db2_collect_cmd_str)
-    sleep(2)
-    return jsonify(result=collect_result)
+    # collect_result = [u'uid=1002(wlpcinst) gid=2001(db2iadm) groups=2001(db2iadm)', u'collect the 0 time snapshot and pd', u'', u'   Database Connection Information', u'', u' Database server        = DB2/LINUXX8664 10.5.5', u' SQL authorization ID   = WLPCINST', u' Local database alias   = PIRADB', u'', u'Sending -addnode output to /tmp/zxyx/wlpcdbs_db2_171025092834/pdeverything.log.092839', u'Sending -temptable output to /tmp/zxyx/wlpcdbs_db2_171025092834/pdeverything.log.092839', u'-quiesceinfo option is only available in Shared Data (SD) configurations.', u'Sending all options output to /tmp/zxyx/wlpcdbs_db2_171025092834/pdeverything.log.092839.', u'collect the 1 time snapshot and pd', u'', u'   Database Connection Information', u'', u' Database server        = DB2/LINUXX8664 10.5.5', u' SQL authorization ID   = WLPCINST', u' Local database alias   = PIRADB', u'', u'Sending -addnode output to /tmp/zxyx/wlpcdbs_db2_171025092834/pdeverything.log.092848', u'Sending -temptable output to /tmp/zxyx/wlpcdbs_db2_171025092834/pdeverything.log.092848', u'-quiesceinfo option is only available in Shared Data (SD) configurations.', u'Sending all options output to /tmp/zxyx/wlpcdbs_db2_171025092834/pdeverything.log.092848.', u'collect the 2 time snapshot and pd', u'', u'   Database Connection Information', u'', u' Database server        = DB2/LINUXX8664 10.5.5', u' SQL authorization ID   = WLPCINST', u' Local database alias   = PIRADB', u'', u'Sending -addnode output to /tmp/zxyx/wlpcdbs_db2_171025092834/pdeverything.log.092858', u'Sending -temptable output to /tmp/zxyx/wlpcdbs_db2_171025092834/pdeverything.log.092858', u'-quiesceinfo option is only available in Shared Data (SD) configurations.', u'Sending all options output to /tmp/zxyx/wlpcdbs_db2_171025092834/pdeverything.log.092858.', u'###########start to tar and gzip log#################wlpcdbs_db2_171025092834/', u'wlpcdbs_db2_171025092834/pdeverything.log.092858', u'wlpcdbs_db2_171025092834/snapshot.log.092835', u'wlpcdbs_db2_171025092834/snapshot.log.092854', u'wlpcdbs_db2_171025092834/snapshot.log.092845', u'wlpcdbs_db2_171025092834/pdeverything.log.092839', u'wlpcdbs_db2_171025092834/pdeverything.log.092848', u'wlpcdbs_db2_171025092834/db2diag.log.171025', u'collect db2pd and db2 snapshot success!']
+    return jsonify(result='\n'.join(collect_result["stdout_lines"]))
 
 
 @app.route('/_collect_was')
@@ -282,7 +282,8 @@ def jquery_collect_was(was_inven=None, prf_name=None, srv_name=None):
 
 if __name__ == '__main__':
     app.debug = True
-    # import sys
-    # reload(sys)
-    # sys.setdefaultencoding('utf8')
+    if PRODUCT:
+        import sys
+        reload(sys)
+        sys.setdefaultencoding('utf8')
     app.run(host='0.0.0.0')
