@@ -2,11 +2,14 @@
   <dictionary name="zrongh_drc_nb">
     <words>
       <w>ansible</w>
+      <w>asctime</w>
+      <w>dest</w>
       <w>elif</w>
       <w>endblock</w>
       <w>endfor</w>
       <w>endwith</w>
       <w>inven</w>
+      <w>lineno</w>
       <w>passwd</w>
       <w>serializeable</w>
       <w>sqlalchemy</w>

@@ -15,6 +15,15 @@
             <li><a class="navbar-brand nav-text" href="{{ url_for('get_all_system') }}">系统列表</a></li>
             <li class="dropdown">
                 <a href="#" class="dropdown-toggle nav-text" data-toggle="dropdown" role="button" aria-haspopup="true"
+                   aria-expanded="false">组件信息<span class="caret"></span></a>
+                <ul class="dropdown-menu">
+                    <li><a href="{{ url_for('get_all_websphere') }}">WebSphere</a></li>
+                    <li><a href="{{ url_for('get_all_db2') }}">DB2</a></li>
+                    <li><a href="#">Something else here</a></li>
+                </ul>
+            </li>
+            <li class="dropdown">
+                <a href="#" class="dropdown-toggle nav-text" data-toggle="dropdown" role="button" aria-haspopup="true"
                    aria-expanded="false">工具<span class="caret"></span></a>
                 <ul class="dropdown-menu">
                     <li><a href="{{ url_for('tivoli') }}">Tivoli监控</a></li>

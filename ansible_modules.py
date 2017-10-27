@@ -26,6 +26,7 @@ REPORTER_USER = u'db2inst1'
 REPORTER_PASSWD = u'passw0rd'
 GATHER_FACTS = u'yes'
 NOT_GATHER_FACTS = u'no'
+
 return_json_str = None
 
 
@@ -46,6 +47,15 @@ class ResultCallback(CallbackBase):
         elif "ansible_facts" in result._result:
             app.logger.debug(result._result["ansible_facts"])
             self.host_ok["ansible_facts"] = result._result["ansible_facts"]
+    def v2_runner_on_failed(self, result, **kwargs):
+	app.logger.debug("run into ansible failed")
+	for i in result._result:
+	    app.logger.debug(result._result[i])
+    def v2_runner_on_unreachable(self, result, **kwargs):
+	app.logger.debug("run into ansible unreadched")
+	for i in result._result:
+	    app.logger.debug(result._result[i])
+
 
     def get_host_ok(self):
         return self.host_ok
@@ -62,8 +72,8 @@ def ansible_run_api(inventory_in, tasks_list, input_options, input_passwd_dict, 
     """
     host_list = [inventory_in]
 
-    app.logger.debug("ansible run")
-    app.logger.debug("inventory_in: " + inventory_in)
+    app.logger.debug("ansible run\ninventory_in:" + inventory_in)
+    app.logger.debug(tasks_list)
 
     # initialize needed objects
     variable_manager = VariableManager()
@@ -129,8 +139,11 @@ def script_issue_ansible_run(inventory_in, script_name):
     :param script_name: 需要下发的脚本名称
     :return:
     """
-    # TODO: 完成脚本下发，先进行耦合度较低的脚本的下发
-    pass
+    # TODO: 初始化时完成脚本下发，先进行耦合度较低的脚本的下发
+    copy_args = "src=./scripts/" + script_name + " dest=/tmp/" + " mode=0644 owner=root"
+    tasks_list = [dict(action=dict(module="copy", args=copy_args))]
+    return ansible_run_api(inventory_in=inventory_in, tasks_list=tasks_list, input_options=get_default_option(),
+                    input_passwd_dict=dict(vault_pass='secret'), is_gather_facts=NOT_GATHER_FACTS)
 
 
 def details_ansible_run(inventory_in):
@@ -140,8 +153,7 @@ def details_ansible_run(inventory_in):
     :returns None
     """
     tasks_list = [dict(action=dict(module='shell', args=INFO_GET_SCRIPT))]
-    return ansible_run_api(inventory_in, tasks_list, get_default_option(), dict(vault_pass='secret'),
-                    GATHER_FACTS)
+    return ansible_run_api(inventory_in, tasks_list, get_default_option(), dict(vault_pass='secret'), GATHER_FACTS)
 
 
 def tivoli_ansible_run(tivoli_clear_shell):
@@ -153,7 +165,9 @@ def tivoli_ansible_run(tivoli_clear_shell):
     inventory_in = REPORTER_INVENTORY
     in_remote_user = 'db2inst1'
     in_dict_passwd = dict(conn_pass=REPORTER_PASSWD)
-    tasks_list = [dict(action=dict(module='shell', args=tivoli_clear_shell))]
+    tasks_list = [
+	dict(action=dict(module='shell', args=tivoli_clear_shell))
+	]
     Options = namedtuple('Options',
                          ['connection', 'module_path', 'forks', 'sudo', 'remote_user', 'become', 'become_method',
                           'become_user', 'check'])
@@ -178,6 +192,7 @@ if __name__ == '__main__':
     #details_ansible_run("192.168.3.145")
     #details_ansible_run("10.8.5.35")
     #details_ansible_run("10.8.5.46")
-    return_host_ok = tivoli_ansible_run("python /home/db2inst1/alert_ctl.py content Ethernet110/1/20端口运行状态改变")
+    #return_host_ok = tivoli_ansible_run("python /home/db2inst1/alert_ctl.py content Ethernet110/1/20端口运行状态改变")
+    return_host_ok = script_issue_ansible_run("10.8.1.86", "alert_ctl.py")
     print(return_host_ok)
     # print(return_str)

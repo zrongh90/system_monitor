@@ -4,26 +4,26 @@ from sqlalchemy import distinct
 from werkzeug.utils import redirect
 from time import sleep
 import logging.handlers
-
 # from ansible_modules import ansible_collect
 from modules import System, WebSphere, DB2, app, db
-
-
 from utils import detail_update
+
 
 NUM_PER_PAGE = 11
 LOG_FILE = 'main.log'
 PRODUCT = False
 # from ansible_modules import ansible_run
 if PRODUCT:
-    from ansible_modules import tivoli_ansible_run, details_ansible_run, ansible_collect
+    from ansible_modules import tivoli_ansible_run, details_ansible_run, ansible_collect, script_issue_ansible_run
 
-handler = logging.handlers.RotatingFileHandler(LOG_FILE, maxBytes=1024*1024, backupCount=5)
-fmt = "%(asctime)s - %(filename)s:%(lineno)s - %(module)s:%(funcName)s - %(message)s"
-formatter = logging.Formatter(fmt)
-handler.setFormatter(formatter)
-handler.setLevel(logging.DEBUG)
-app.logger.addHandler(handler)
+
+def init_log():
+    handler = logging.handlers.RotatingFileHandler(LOG_FILE, maxBytes=1024*1024, backupCount=5)
+    fmt = "%(asctime)s - %(filename)s:%(lineno)s - %(module)s:%(funcName)s - %(message)s"
+    formatter = logging.Formatter(fmt)
+    handler.setFormatter(formatter)
+    handler.setLevel(logging.DEBUG)
+    app.logger.addHandler(handler)
 
 
 @app.errorhandler(404)
@@ -66,6 +66,20 @@ def get_all_system():
     return render_template("all_system.html", inventory_filter_val="", title="主机信息列表", system_list=systems,
                            pagination=paginate, os_filter_val="", os_list_val=get_os_list(),
                            sys_was_count_list=sys_was_count_list, sys_db2_count_list=sys_db2_count_list)
+
+
+@app.route('/all_websphere', methods=['GET'])
+def get_all_websphere():
+    # TODO: 获取WAS列表的界面及方法，分页
+    app.logger.debug("run into get_all_websphere function")
+    return render_template("all_websphere.html", title="WebSphere中间件信息列表")
+
+
+@app.route('/all_db2', methods=['GET'])
+def get_all_db2():
+    # TODO: 获取DB2列表的界面及方法，分页
+    app.logger.debug("run into get_all_db2 function")
+    return render_template("all_db2.html", title="DB2信息列表")
 
 
 @app.route('/filter', methods=['POST', 'GET'])
@@ -119,16 +133,13 @@ def detail(inventory=None):
     """
     try:
         system_detail = System.query.filter_by(inventory=inventory).first_or_404()
-        was_detail = WebSphere.query.filter_by(sys_inventory=inventory).all()
-        db2_detail = DB2.query.filter_by(sys_inventory=inventory).all()
-
         if PRODUCT:
             # 删除数据库中目前有的was/db2信息
-            app.logger.debug("remove current WebSphere/DB2 info")
-            for one_was in was_detail:
-                db.session.delete(one_was)
-            for one_db2 in db2_detail:
-                db.session.delete(one_db2)
+            # app.logger.debug("remove current WebSphere/DB2 info")
+            # for one_was in was_detail:
+            #     db.session.delete(one_was)
+            # for one_db2 in db2_detail:
+            #     db.session.delete(one_db2)
             # call ansible function to retrieve websphere,db2,system info for target inventory
             # current only realize get websphere info
             details_host_ok = details_ansible_run(inventory_in=inventory)
@@ -164,11 +175,12 @@ def deal_tivoli_condition(in_condition):
     return_host_ok = {"stdout_lines": ""}
     if PRODUCT:
         return_host_ok = tivoli_ansible_run(tivoli_cmd)
+        app.logger.debug(return_host_ok)
     if len(return_host_ok["stdout_lines"]) == 0:
         flash("no record match event: " + in_condition, 'info')
-    for msg in return_host_ok["stdout_lines"]:
-        # msg = "success update tivoli for event_content: " + str(event_content)
-        flash(msg, 'success')
+    else:
+        for msg in return_host_ok["stdout_lines"]:
+            flash(msg, 'success')
 
 
 @app.route('/clear_tivoli_alert', methods=['POST'])
@@ -203,22 +215,22 @@ def clear_tivoli_alert(event_id=None, event_ip=None, event_content=None):
     return redirect(url_for('tivoli'))
 
 
-# 通过jquery获取系统的WAS信息
-# input: invent_val
-# return: serialized WebSphere Object
 @app.route('/_get_was')
 def jquery_get_was_info():
+    # 通过jquery获取系统的WAS信息
+    # input: invent_val
+    # return: serialized WebSphere Object
     inventory_input = request.args.get('invent_val', 0, type=str)
     app.logger.debug("inventory_input:" + inventory_input)
     was_detail = WebSphere.query.filter_by(sys_inventory=inventory_input)
     return jsonify(result=[i.serialize for i in was_detail.all()])
 
 
-# 通过jquery获取系统的DB2信息
-# input: invent_val
-# return: serialized DB2 Object
 @app.route('/_get_db2')
 def jquery_get_db2_info():
+    # 通过jquery获取系统的DB2信息
+    # input: invent_val
+    # return: serialized DB2 Object
     inventory_input = request.args.get('invent_val', None, type=str)
     app.logger.debug("inventory_input:" + inventory_input)
     db2_detail = DB2.query.filter_by(sys_inventory=inventory_input)
@@ -249,17 +261,18 @@ def jquery_collect_db2(db_inven=None, db_name=None, inst_name=None):
     :param inst_name: 数据库的实例名称
     :return: result： 收集结果
     """
+    app.logger.debug("run into jquery_collect_db2 function")
     db_inven = request.args.get('db_inven', None, type=str)
     db_name = request.args.get('db_name', None, type=str)
     inst_name = request.args.get('inst_name', None, type=str)
     db2_collect_cmd_str = "su - " + inst_name + " -c \"sh /zxyx/collect/get_db2_log.sh " + inst_name \
                           + " \'\' " + db_name + "\""
     app.logger.debug(db2_collect_cmd_str)
-    # TODO: call ansible to run command to collect db2 snapshot and pd
-    collect_result = []
+    collect_result = {}
     if PRODUCT:
         collect_result = ansible_collect(db_inven, db2_collect_cmd_str)
-    # collect_result = [u'uid=1002(wlpcinst) gid=2001(db2iadm) groups=2001(db2iadm)', u'collect the 0 time snapshot and pd', u'', u'   Database Connection Information', u'', u' Database server        = DB2/LINUXX8664 10.5.5', u' SQL authorization ID   = WLPCINST', u' Local database alias   = PIRADB', u'', u'Sending -addnode output to /tmp/zxyx/wlpcdbs_db2_171025092834/pdeverything.log.092839', u'Sending -temptable output to /tmp/zxyx/wlpcdbs_db2_171025092834/pdeverything.log.092839', u'-quiesceinfo option is only available in Shared Data (SD) configurations.', u'Sending all options output to /tmp/zxyx/wlpcdbs_db2_171025092834/pdeverything.log.092839.', u'collect the 1 time snapshot and pd', u'', u'   Database Connection Information', u'', u' Database server        = DB2/LINUXX8664 10.5.5', u' SQL authorization ID   = WLPCINST', u' Local database alias   = PIRADB', u'', u'Sending -addnode output to /tmp/zxyx/wlpcdbs_db2_171025092834/pdeverything.log.092848', u'Sending -temptable output to /tmp/zxyx/wlpcdbs_db2_171025092834/pdeverything.log.092848', u'-quiesceinfo option is only available in Shared Data (SD) configurations.', u'Sending all options output to /tmp/zxyx/wlpcdbs_db2_171025092834/pdeverything.log.092848.', u'collect the 2 time snapshot and pd', u'', u'   Database Connection Information', u'', u' Database server        = DB2/LINUXX8664 10.5.5', u' SQL authorization ID   = WLPCINST', u' Local database alias   = PIRADB', u'', u'Sending -addnode output to /tmp/zxyx/wlpcdbs_db2_171025092834/pdeverything.log.092858', u'Sending -temptable output to /tmp/zxyx/wlpcdbs_db2_171025092834/pdeverything.log.092858', u'-quiesceinfo option is only available in Shared Data (SD) configurations.', u'Sending all options output to /tmp/zxyx/wlpcdbs_db2_171025092834/pdeverything.log.092858.', u'###########start to tar and gzip log#################wlpcdbs_db2_171025092834/', u'wlpcdbs_db2_171025092834/pdeverything.log.092858', u'wlpcdbs_db2_171025092834/snapshot.log.092835', u'wlpcdbs_db2_171025092834/snapshot.log.092854', u'wlpcdbs_db2_171025092834/snapshot.log.092845', u'wlpcdbs_db2_171025092834/pdeverything.log.092839', u'wlpcdbs_db2_171025092834/pdeverything.log.092848', u'wlpcdbs_db2_171025092834/db2diag.log.171025', u'collect db2pd and db2 snapshot success!']
+    else:
+        collect_result["stdout_lines"] = [u'uid=1002(wlpcinst) gid=2001(db2iadm) groups=2001(db2iadm)', u'collect the 0 time snapshot and pd', u'', u'   Database Connection Information', u'', u' Database server        = DB2/LINUXX8664 10.5.5', u' SQL authorization ID   = WLPCINST', u' Local database alias   = PIRADB', u'', u'Sending -addnode output to /tmp/zxyx/wlpcdbs_db2_171025092834/pdeverything.log.092839', u'Sending -temptable output to /tmp/zxyx/wlpcdbs_db2_171025092834/pdeverything.log.092839', u'-quiesceinfo option is only available in Shared Data (SD) configurations.', u'Sending all options output to /tmp/zxyx/wlpcdbs_db2_171025092834/pdeverything.log.092839.', u'collect the 1 time snapshot and pd', u'', u'   Database Connection Information', u'', u' Database server        = DB2/LINUXX8664 10.5.5', u' SQL authorization ID   = WLPCINST', u' Local database alias   = PIRADB', u'', u'Sending -addnode output to /tmp/zxyx/wlpcdbs_db2_171025092834/pdeverything.log.092848', u'Sending -temptable output to /tmp/zxyx/wlpcdbs_db2_171025092834/pdeverything.log.092848', u'-quiesceinfo option is only available in Shared Data (SD) configurations.', u'Sending all options output to /tmp/zxyx/wlpcdbs_db2_171025092834/pdeverything.log.092848.', u'collect the 2 time snapshot and pd', u'', u'   Database Connection Information', u'', u' Database server        = DB2/LINUXX8664 10.5.5', u' SQL authorization ID   = WLPCINST', u' Local database alias   = PIRADB', u'', u'Sending -addnode output to /tmp/zxyx/wlpcdbs_db2_171025092834/pdeverything.log.092858', u'Sending -temptable output to /tmp/zxyx/wlpcdbs_db2_171025092834/pdeverything.log.092858', u'-quiesceinfo option is only available in Shared Data (SD) configurations.', u'Sending all options output to /tmp/zxyx/wlpcdbs_db2_171025092834/pdeverything.log.092858.', u'###########start to tar and gzip log#################wlpcdbs_db2_171025092834/', u'wlpcdbs_db2_171025092834/pdeverything.log.092858', u'wlpcdbs_db2_171025092834/snapshot.log.092835', u'wlpcdbs_db2_171025092834/snapshot.log.092854', u'wlpcdbs_db2_171025092834/snapshot.log.092845', u'wlpcdbs_db2_171025092834/pdeverything.log.092839', u'wlpcdbs_db2_171025092834/pdeverything.log.092848', u'wlpcdbs_db2_171025092834/db2diag.log.171025', u'collect db2pd and db2 snapshot success!']
     return jsonify(result='\n'.join(collect_result["stdout_lines"]))
 
 
@@ -282,6 +295,7 @@ def jquery_collect_was(was_inven=None, prf_name=None, srv_name=None):
 
 if __name__ == '__main__':
     app.debug = True
+    init_log()
     if PRODUCT:
         import sys
         reload(sys)
