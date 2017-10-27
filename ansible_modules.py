@@ -47,18 +47,20 @@ class ResultCallback(CallbackBase):
         elif "ansible_facts" in result._result:
             app.logger.debug(result._result["ansible_facts"])
             self.host_ok["ansible_facts"] = result._result["ansible_facts"]
-    def v2_runner_on_failed(self, result, **kwargs):
-	app.logger.debug("run into ansible failed")
-	for i in result._result:
-	    app.logger.debug(result._result[i])
-    def v2_runner_on_unreachable(self, result, **kwargs):
-	app.logger.debug("run into ansible unreadched")
-	for i in result._result:
-	    app.logger.debug(result._result[i])
 
+    def v2_runner_on_failed(self, result, **kwargs):
+        app.logger.debug("run into ansible failed")
+        for i in result._result:
+            app.logger.debug(result._result[i])
+
+    def v2_runner_on_unreachable(self, result, **kwargs):
+        app.logger.debug("run into ansible unreadched")
+        for i in result._result:
+            app.logger.debug(result._result[i])
 
     def get_host_ok(self):
         return self.host_ok
+
 
 def ansible_run_api(inventory_in, tasks_list, input_options, input_passwd_dict, is_gather_facts):
     """
@@ -152,6 +154,7 @@ def details_ansible_run(inventory_in):
     :param inventory_in: the inventory to get details
     :returns None
     """
+    # TODO:修改获取WAS内存信息的接口，统一返回计算后的内存值
     tasks_list = [dict(action=dict(module='shell', args=INFO_GET_SCRIPT))]
     return ansible_run_api(inventory_in, tasks_list, get_default_option(), dict(vault_pass='secret'), GATHER_FACTS)
 

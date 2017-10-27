@@ -72,7 +72,9 @@ def get_all_system():
 def get_all_websphere():
     # TODO: 获取WAS列表的界面及方法，分页
     app.logger.debug("run into get_all_websphere function")
-    return render_template("all_websphere.html", title="WebSphere中间件信息列表")
+    page = request.args.get('page', 1, type=int)
+    was_list_in = WebSphere.query.all()
+    return render_template("all_websphere.html", title="WebSphere中间件信息列表", was_list=was_list_in)
 
 
 @app.route('/all_db2', methods=['GET'])

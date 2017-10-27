@@ -1,7 +1,30 @@
 {% extends "layout.html" %}
 {% block body %}
 <body>
-<h1>all websphere page</h1>
+<div class="container theme-showcase">
+    <table class="table">
+        <thead>
+        <tr>
+            <th>#</th>
+            <th>profile_name</th>
+            <th>sever_name</th>
+            <th>max_memory</th>
+            <th>current_memory</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for one_was in was_list %}
+        <tr>
+            <td>{{ one_was.was_info_id }}</td>
+            <td>{{ one_was.prf_name }}</td>
+            <td>{{ one_was.srv_name }}</td>
+            <td>{{ one_was.max_mem }}</td>
+            <td>{{ one_was.curr_mem }}</td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
 </body>
 <script type=text/javascript>
 </script>

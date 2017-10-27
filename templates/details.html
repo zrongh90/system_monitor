@@ -44,8 +44,7 @@
             <tbody>
 
             {% for one_was in was_detail_in %}
-            {% set curr_mem = (system_detail_in.memory * one_was.curr_mem / 100) | round(2,'common') %}
-            {% set mem_per = (curr_mem / one_was.max_mem * 100) | round(2,'common') %}
+            {% set mem_per = ( one_was.curr_mem / one_was.max_mem * 100) | round(2,'common') %}
             {% if mem_per > 90 %}
             <tr class="text-danger">
                 {% else %}
@@ -55,7 +54,7 @@
                 <td>{{ one_was.prf_name }}</td>
                 <td>{{ one_was.srv_name }}</td>
                 <td>{{ one_was.max_mem }}</td>
-                <td>{{ curr_mem }}</td>
+                <td>{{ one_was.curr_mem }}</td>
                 <td>{{ mem_per }}</td>
                 <td>
                     <button type="button" classify="was_collect" data-loading-text="Processing..."
