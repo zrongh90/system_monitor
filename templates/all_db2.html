@@ -1,8 +1,27 @@
 {% extends "layout.html" %}
 {% block body %}
 <body>
-<h1>all db2 page</h1>
+<div class="container theme-showcase">
+    <table class="table">
+        <thead>
+        <tr>
+            <th>#</th>
+            <th>instance_name</th>
+            <th>listen_port</th>
+            <th>database_name</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for one_db2 in db2_list %}
+        <tr>
+            <td>{{ one_db2.db2_info_id }}</td>
+            <td>{{ one_db2.inst_name }}</td>
+            <td>{{ one_db2.listen_port }}</td>
+            <td>{{ one_db2.db_name }}</td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
 </body>
-<script type=text/javascript>
-</script>
 {% endblock %}

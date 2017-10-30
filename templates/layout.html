@@ -27,31 +27,48 @@
                    aria-expanded="false">工具<span class="caret"></span></a>
                 <ul class="dropdown-menu">
                     <li><a href="{{ url_for('tivoli') }}">Tivoli监控</a></li>
+                    <li><a id="goAssetMan">资产管理系统</a></li>
+                    <div style="display:none">
+                    <form name="form1" method="post" action="http://10.8.1.107:8089/SystemLogin.aspx" id="form1">
+                        <input type="hidden" name="__VIEWSTATE" id="__VIEWSTATE"
+                               value="/wEPDwULLTEzMzEwNTMxMDNkGAEFHl9fQ29udHJvbHNSZXF1aXJlUG9zdEJhY2tLZXlfXxYCBQxJbWFnZUJ1dHRvbjEFDEltYWdlQnV0dG9uMkbCh6aHNm765oQ3XIL8GVME3zCU"/>
+                        <input name="TxtUserName" type="text" id="TxtUserName" class="LoginUserName"
+                               value="admin"/>
+                        <input name="TxtPassWord" type="password" id="TxtPassWord" class="LoginPassWord"
+                               value="admin"/>
+                        <input type="image" name="ImageButton1" id="ImageButton1" class="LoginBntOk"
+                               src="NewImage/loginBntOk.gif" style="border-width:0px;"/>
+                        <input type="hidden" name="__EVENTVALIDATION" id="__EVENTVALIDATION"
+                               value="/wEWBQK3xoGDBwLF1bSzCQLVqbaWCwLSwpnTCALSwtXkAsLLwMJjpSE1pZbO5BhMLIpy5whw"/>
+                    </form>
+                        </div>
                     <li><a href="#">Another action</a></li>
                     <li><a href="#">Something else here</a></li>
                 </ul>
             </li>
         </ul>
     </div>
+
 </header>
 {% with messages = get_flashed_messages(with_categories=true) %}
 {% if messages %}
-    {% for category, message in messages %}
-        {% if category == "success" %}
-            <div class="alert alert-success" role="alert">
-            {{ message }}
-            </div>
-        {% elif category == "error" %}
-            <div class="alert alert-danger" role="alert">
-            {{ message }}
-            </div>
-        {% else %}
-            <div class="alert alert-warning" role="alert">
-            {{ message }}
-            </div>
-        {% endif%}
-    {% endfor %}
+{% for category, message in messages %}
+{% if category == "success" %}
+<div class="alert alert-success" role="alert">
+    {{ message }}
+</div>
+{% elif category == "error" %}
+<div class="alert alert-danger" role="alert">
+    {{ message }}
+</div>
+{% else %}
+<div class="alert alert-warning" role="alert">
+    {{ message }}
+</div>
+{% endif%}
+{% endfor %}
 {% endif %}
 {% endwith %}
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
 {% block body %}
 {% endblock %}

@@ -81,7 +81,9 @@ def get_all_websphere():
 def get_all_db2():
     # TODO: 获取DB2列表的界面及方法，分页
     app.logger.debug("run into get_all_db2 function")
-    return render_template("all_db2.html", title="DB2信息列表")
+    page = request.args.get('page', 1, type=int)
+    db2_list_in = DB2.query.all()
+    return render_template("all_db2.html", title="DB2信息列表", db2_list=db2_list_in)
 
 
 @app.route('/filter', methods=['POST', 'GET'])
