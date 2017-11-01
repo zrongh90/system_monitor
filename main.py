@@ -69,21 +69,33 @@ def get_all_system():
 
 
 @app.route('/all_websphere', methods=['GET'])
-def get_all_websphere():
-    # TODO: 获取WAS列表的界面及方法，分页
+def get_all_websphere(page=None):
+    """
+    分页获取websphere的信息列表
+    :param page: 当前分页
+    :return: 分页后的结果列表及分页信息
+    """
     app.logger.debug("run into get_all_websphere function")
     page = request.args.get('page', 1, type=int)
-    was_list_in = WebSphere.query.all()
-    return render_template("all_websphere.html", title="WebSphere中间件信息列表", was_list=was_list_in)
+    paginate = WebSphere.query.paginate(page, NUM_PER_PAGE)
+    was_list_in = paginate.items
+    return render_template("all_websphere.html", title="WebSphere中间件信息列表",
+                           pagination=paginate, was_list=was_list_in)
 
 
 @app.route('/all_db2', methods=['GET'])
-def get_all_db2():
-    # TODO: 获取DB2列表的界面及方法，分页
+def get_all_db2(page=None):
+    """
+    分页获取DB2的信息列表
+    :param page: 当前分页
+    :return: 分页后的结果列表及分页信息
+    """
     app.logger.debug("run into get_all_db2 function")
     page = request.args.get('page', 1, type=int)
-    db2_list_in = DB2.query.all()
-    return render_template("all_db2.html", title="DB2信息列表", db2_list=db2_list_in)
+    paginate = DB2.query.paginate(page, NUM_PER_PAGE)
+    db2_list_in = paginate.items
+    return render_template("all_db2.html", title="DB2信息列表",
+                           pagination=paginate, db2_list=db2_list_in)
 
 
 @app.route('/filter', methods=['POST', 'GET'])

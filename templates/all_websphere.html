@@ -24,6 +24,10 @@
         {% endfor %}
         </tbody>
     </table>
+    <!--导入分页方法，由于不需进行过滤，三四参数为空-->
+    {% import '_macro.html' as macros %}
+    {{ macros.render_pagination(pagination, 'get_all_websphere', None, None) }}
 </div>
+
 </body>
 {% endblock %}
