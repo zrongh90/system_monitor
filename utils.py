@@ -12,6 +12,8 @@ def inventory_db2_ansible_update(db2_info_list=None, inventory=None):
     """
     app.logger.debug("run into db2 info update")
     db2_detail = DB2.query.filter_by(sys_inventory=inventory).all()
+
+    app.logger.debug("run into db2 info update 2")
     for one_db in db2_info_list:
         inst_name_in = one_db["inst_name"]
         db_name_in = one_db["db_str"]
@@ -20,17 +22,17 @@ def inventory_db2_ansible_update(db2_info_list=None, inventory=None):
         for curr_db in db2_detail:
             # 当前数据库中包含inventory对应的数据库名，只更新对应数据
             if curr_db.db_name == db_name_in:
-                app.logger.debug("update current db2 info for object id: " + curr_db.db2_info_id)
+                app.logger.debug("update current db2 info for object id: " + str(curr_db.db2_info_id))
                 curr_db.inst_name = inst_name_in
                 curr_db.listen_port = int(listen_port_in)
                 update_only_flag = True
-            # 当前数据库中不包含数据库信息，新增数据库信息
-            if not update_only_flag:
-                new_db2 = DB2(inst_name=inst_name_in, db_name=db_name_in, listen_port=int(listen_port_in),
-                              sys_inventory=str(inventory))
-                app.logger.debug("insert new db2 info into database")
-                app.logger.debug(new_db2)
-                db.session.add(new_db2)
+        # 当前数据库中不包含数据库信息，新增数据库信息
+        if not update_only_flag:
+            new_db2 = DB2(inst_name=inst_name_in, db_name=db_name_in, listen_port=int(listen_port_in),
+                           sys_inventory=str(inventory))
+            app.logger.debug("insert new db2 info into database")
+            app.logger.debug(new_db2)
+            db.session.add(new_db2)
 
 
 def inventory_was_ansible_update(was_info_list=None, inventory=None):
@@ -41,8 +43,11 @@ def inventory_was_ansible_update(was_info_list=None, inventory=None):
     :return: None
     """
     app.logger.debug("run into was info update")
+    print(inventory)
     was_detail = WebSphere.query.filter_by(sys_inventory=inventory).all()
+    app.logger.debug("run into was info update 2")
     for one_was in was_info_list:
+        app.logger.debug("was detail upate")
         prf_name_in = one_was['prf_path'].strip()
         srv_name_in = one_was['srv_name'].strip()
         curr_mem_in = one_was['mem']
@@ -50,11 +55,12 @@ def inventory_was_ansible_update(was_info_list=None, inventory=None):
         update_only_flag = False
         for curr_was in was_detail:
             # 当前数据库中包含该was信息，只更新其他数据
-            if prf_name_in == curr_was.prf_name:
-                app.logger.debug("update current was info for object id:" + curr_was.was_info_id)
+            if prf_name_in == curr_was.prf_name and srv_name_in == curr_was.srv_name:
+                app.logger.debug("update current was info for object id:" + str(curr_was.was_info_id))
                 curr_was.srv_name = srv_name_in
                 curr_was.max_mem = int(max_mem_in)
                 curr_was.curr_mem = float(curr_mem_in)
+                app.logger.debug(curr_was)
                 update_only_flag = True
         # 当前数据库中不包含目标was信息，新增was
         if not update_only_flag:
@@ -94,10 +100,12 @@ def detail_update(sys_obj, details_host_ok):
         one_component_dict = eval(one_component)
         was_json = json.loads(one_component_dict["was"])
         if was_json["status"] == "success":
-            inventory_was_ansible_update(was_json["msg"], details_host_ok["host"])
-        db2_json = json.loads(one_component_dict["db2"])
+            app.logger.debug(details_host_ok["host"])
+            inventory_was_ansible_update(was_json["msg"], details_host_ok["host"].name)
+            db2_json = json.loads(one_component_dict["db2"])
         if db2_json["status"] == "success":
-            inventory_db2_ansible_update(db2_json["msg"], details_host_ok["host"])
+            inventory_db2_ansible_update(db2_json["msg"], details_host_ok["host"].name)
     ansible_facts = details_host_ok["ansible_facts"]
+    app.logger.debug(sys_obj)
     inventory_sys_ansible_update(sys_obj, ansible_facts)
 

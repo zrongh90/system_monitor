@@ -159,6 +159,7 @@ def detail(inventory=None):
             # call ansible function to retrieve websphere,db2,system info for target inventory
             # current only realize get websphere info
             details_host_ok = details_ansible_run(inventory_in=inventory)
+            app.logger.debug(system_detail)
             detail_update(system_detail, details_host_ok)
         db.session.commit()
         # app.logger.debug(details_host_ok)
