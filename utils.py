@@ -19,8 +19,8 @@ def inventory_db2_ansible_update(db2_info_list=None, inventory=None):
         db_name_in = one_db["db_str"]
         listen_port_in = one_db["port_ouput"]
         update_only_flag = False
+        # 当前数据库中包含inventory对应的数据库名，只更新对应数据
         for curr_db in db2_detail:
-            # 当前数据库中包含inventory对应的数据库名，只更新对应数据
             if curr_db.db_name == db_name_in:
                 app.logger.debug("update current db2 info for object id: " + str(curr_db.db2_info_id))
                 curr_db.inst_name = inst_name_in
@@ -29,7 +29,7 @@ def inventory_db2_ansible_update(db2_info_list=None, inventory=None):
         # 当前数据库中不包含数据库信息，新增数据库信息
         if not update_only_flag:
             new_db2 = DB2(inst_name=inst_name_in, db_name=db_name_in, listen_port=int(listen_port_in),
-                           sys_inventory=str(inventory))
+                          sys_inventory=str(inventory))
             app.logger.debug("insert new db2 info into database")
             app.logger.debug(new_db2)
             db.session.add(new_db2)
@@ -53,8 +53,8 @@ def inventory_was_ansible_update(was_info_list=None, inventory=None):
         curr_mem_in = one_was['mem']
         max_mem_in = one_was['max_mem']
         update_only_flag = False
+        # 当前数据库中包含该was信息，只更新其他数据
         for curr_was in was_detail:
-            # 当前数据库中包含该was信息，只更新其他数据
             if prf_name_in == curr_was.prf_name and srv_name_in == curr_was.srv_name:
                 app.logger.debug("update current was info for object id:" + str(curr_was.was_info_id))
                 curr_was.srv_name = srv_name_in
@@ -108,4 +108,3 @@ def detail_update(sys_obj, details_host_ok):
     ansible_facts = details_host_ok["ansible_facts"]
     app.logger.debug(sys_obj)
     inventory_sys_ansible_update(sys_obj, ansible_facts)
-

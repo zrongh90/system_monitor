@@ -77,7 +77,7 @@ def get_all_websphere(page=None):
     """
     app.logger.debug("run into get_all_websphere function")
     page = request.args.get('page', 1, type=int)
-    paginate = WebSphere.query.paginate(page, NUM_PER_PAGE)
+    paginate = db.session.query(WebSphere, System).join(System).order_by(System.inventory).paginate(page, NUM_PER_PAGE)
     was_list_in = paginate.items
     return render_template("all_websphere.html", title="WebSphere中间件信息列表",
                            pagination=paginate, was_list=was_list_in)
@@ -92,7 +92,7 @@ def get_all_db2(page=None):
     """
     app.logger.debug("run into get_all_db2 function")
     page = request.args.get('page', 1, type=int)
-    paginate = DB2.query.paginate(page, NUM_PER_PAGE)
+    paginate = db.session.query(DB2, System).join(System).paginate(page, NUM_PER_PAGE)
     db2_list_in = paginate.items
     return render_template("all_db2.html", title="DB2信息列表",
                            pagination=paginate, db2_list=db2_list_in)

@@ -6,6 +6,8 @@
         <thead>
         <tr>
             <th>#</th>
+            <th>inventory</th>
+            <th>hostname</th>
             <th>instance_name</th>
             <th>listen_port</th>
             <th>database_name</th>
@@ -14,10 +16,13 @@
         <tbody>
         {% for one_db2 in db2_list %}
         <tr>
-            <td>{{ one_db2.db2_info_id }}</td>
-            <td>{{ one_db2.inst_name }}</td>
-            <td>{{ one_db2.listen_port }}</td>
-            <td>{{ one_db2.db_name }}</td>
+            <td>{{ one_db2.DB2.db2_info_id }}</td>
+            <td><a href="{{ url_for('detail',inventory=one_db2.System.inventory) }}">
+                {{ one_db2.System.inventory }}</a></td>
+            <td>{{ one_db2.System.hostname }}</td>
+            <td>{{ one_db2.DB2.inst_name }}</td>
+            <td>{{ one_db2.DB2.listen_port }}</td>
+            <td>{{ one_db2.DB2.db_name }}</td>
         </tr>
         {% endfor %}
         </tbody>

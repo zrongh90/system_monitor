@@ -6,6 +6,8 @@
         <thead>
         <tr>
             <th>#</th>
+            <th>inventory</th>
+            <th>hostname</th>
             <th>profile_name</th>
             <th>sever_name</th>
             <th>max_memory</th>
@@ -15,11 +17,14 @@
         <tbody>
         {% for one_was in was_list %}
         <tr>
-            <td>{{ one_was.was_info_id }}</td>
-            <td>{{ one_was.prf_name }}</td>
-            <td>{{ one_was.srv_name }}</td>
-            <td>{{ one_was.max_mem }}</td>
-            <td>{{ one_was.curr_mem }}</td>
+            <td>{{ one_was.WebSphere.was_info_id }}</td>
+            <td><a href="{{ url_for('detail',inventory=one_was.System.inventory) }}">
+                {{ one_was.System.inventory }}</a></td>
+            <td>{{ one_was.System.hostname }}</td>
+            <td>{{ one_was.WebSphere.prf_name }}</td>
+            <td>{{ one_was.WebSphere.srv_name }}</td>
+            <td>{{ one_was.WebSphere.max_mem }}</td>
+            <td>{{ one_was.WebSphere.curr_mem }}</td>
         </tr>
         {% endfor %}
         </tbody>
