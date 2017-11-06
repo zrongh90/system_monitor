@@ -102,7 +102,7 @@
         invent_val: $(this).attr("value"),
       }, function(data) {
       pop_inventory = ''
-        one_result = '<table class="table"><thead><tr><th>instance_name</th><th>database_name</th></tr></thead>'
+        one_result = '<table class="table"><thead><tr><th>instance_name</th><th>db_name</th></tr></thead>'
       $.each(data.result, function(i, item){
       pop_inventory = item.sys_inventory
             one_result = one_result +  "<tr><td>" + item.inst_name + "</td>" + "<td>" + item.db_name + "</td></tr>"

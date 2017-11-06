@@ -14,7 +14,8 @@ LOG_FILE = 'main.log'
 PRODUCT = False
 # from ansible_modules import ansible_run
 if PRODUCT:
-    from ansible_modules import tivoli_ansible_run, details_ansible_run, ansible_collect, script_issue_ansible_run
+    from ansible_modules import tivoli_ansible_run, details_ansible_run, ansible_collect, script_issue_ansible_run, \
+        sys_perf_ansible_run
 
 
 def init_log():
@@ -259,14 +260,17 @@ def jquery_collect_system(sys_inven=None):
     """
     通过jquery 调用ansible接口访问主机并调用linux_perf脚本收集系统信息
     :param sys_inven: 目标主机IP
-    :return: result: 收集结果
+    :return: result: 收集结果展示
     """
     app.logger.debug("into system perf collect!")
     sys_inven = request.args.get('sys_inven', None, type=str)
     app.logger.debug("do with inventory:" + sys_inven)
-    # TODO: call ansible api to run linux_perf script
-    sleep(5)
-    return jsonify(result="success")
+    perf_result = {}
+    if PRODUCT:
+        perf_result = sys_perf_ansible_run(sys_inven)
+    else:
+        perf_result["stdout_lines"] = [u'test', u'test2']
+    return jsonify(result='\n'.join(perf_result["stdout_lines"]))
 
 
 @app.route('/_collect_db2')
@@ -305,9 +309,15 @@ def jquery_collect_was(was_inven=None, prf_name=None, srv_name=None):
     was_inven = request.args.get('was_inven', None, type=str)
     prf_name = request.args.get('prf_name', None, type=str)
     srv_name = request.args.get('srv_name', None, type=str)
-    app.logger.debug(was_inven + ' ' + prf_name + ' ' + srv_name)
-    sleep(5)
-    return jsonify(result="success")
+
+    was_collect_cmd = "python collect_jc.py "+ prf_name + ' ' + srv_name
+    app.logger.debug(was_collect_cmd)
+    collect_result = {}
+    if PRODUCT:
+        collect_result = ansible_collect(inventory_in=was_inven, collect_cmd_str=was_collect_cmd)
+    else:
+        collect_result["stdout_lines"] = ["test1", "test2"]
+    return jsonify(result='\n'.join(collect_result["stdout_lines"]))
 
 
 if __name__ == '__main__':

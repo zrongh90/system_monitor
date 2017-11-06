@@ -145,7 +145,20 @@ def script_issue_ansible_run(inventory_in, script_name):
     copy_args = "src=./scripts/" + script_name + " dest=/tmp/" + " mode=0644 owner=root"
     tasks_list = [dict(action=dict(module="copy", args=copy_args))]
     return ansible_run_api(inventory_in=inventory_in, tasks_list=tasks_list, input_options=get_default_option(),
-                    input_passwd_dict=dict(vault_pass='secret'), is_gather_facts=NOT_GATHER_FACTS)
+                           input_passwd_dict=dict(vault_pass='secret'), is_gather_facts=NOT_GATHER_FACTS)
+
+
+def sys_perf_ansible_run(inventory_in):
+    """
+    通过ansible接口收集系统信息，包括iostat, vmstat, df, netstat等信息
+    :param inventory_in: 需要收集的系统Inventory
+    :return:
+    """
+    # TODO: 所有目标主机新增获取系统信息的python
+    perf_args = "python /zxyx/utils/get_perf.py"
+    tasks_list = [dict(action=dict(module="shell", args=perf_args))]
+    return ansible_run_api(inventory_in=inventory_in, tasks_list=tasks_list, input_options=get_default_option(),
+                           input_passwd_dict=dict(valut_ass='secret'), is_gather_facts=NOT_GATHER_FACTS)
 
 
 def details_ansible_run(inventory_in):
@@ -154,7 +167,6 @@ def details_ansible_run(inventory_in):
     :param inventory_in: the inventory to get details
     :returns None
     """
-    # TODO:修改获取WAS内存信息的接口，统一返回计算后的内存值
     tasks_list = [dict(action=dict(module='shell', args=INFO_GET_SCRIPT))]
     return ansible_run_api(inventory_in, tasks_list, get_default_option(), dict(vault_pass='secret'), GATHER_FACTS)
 
@@ -169,8 +181,8 @@ def tivoli_ansible_run(tivoli_clear_shell):
     in_remote_user = 'db2inst1'
     in_dict_passwd = dict(conn_pass=REPORTER_PASSWD)
     tasks_list = [
-	dict(action=dict(module='shell', args=tivoli_clear_shell))
-	]
+        dict(action=dict(module='shell', args=tivoli_clear_shell))
+    ]
     Options = namedtuple('Options',
                          ['connection', 'module_path', 'forks', 'sudo', 'remote_user', 'become', 'become_method',
                           'become_user', 'check'])
@@ -192,10 +204,10 @@ def ansible_collect(inventory_in, collect_cmd_str):
 
 
 if __name__ == '__main__':
-    #details_ansible_run("192.168.3.145")
-    #details_ansible_run("10.8.5.35")
-    #details_ansible_run("10.8.5.46")
-    #return_host_ok = tivoli_ansible_run("python /home/db2inst1/alert_ctl.py content Ethernet110/1/20端口运行状态改变")
+    # details_ansible_run("192.168.3.145")
+    # details_ansible_run("10.8.5.35")
+    # details_ansible_run("10.8.5.46")
+    # return_host_ok = tivoli_ansible_run("python /home/db2inst1/alert_ctl.py content Ethernet110/1/20端口运行状态改变")
     return_host_ok = script_issue_ansible_run("10.8.1.86", "alert_ctl.py")
     print(return_host_ok)
     # print(return_str)
