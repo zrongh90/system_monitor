@@ -74,7 +74,7 @@ def ansible_run_api(inventory_in, tasks_list, input_options, input_passwd_dict, 
     """
     host_list = [inventory_in]
 
-    app.logger.debug("ansible run\ninventory_in:" + inventory_in)
+    app.logger.debug("ansible run\ninventory_in: {0}".format(inventory_in))
     app.logger.debug(tasks_list)
 
     # initialize needed objects
@@ -141,8 +141,7 @@ def script_issue_ansible_run(inventory_in, script_name):
     :param script_name: 需要下发的脚本名称
     :return:
     """
-    # TODO: 初始化时完成脚本下发，先进行耦合度较低的脚本的下发
-    copy_args = "src=./scripts/" + script_name + " dest=/tmp/" + " mode=0644 owner=root"
+    copy_args = "src=./scripts/{0} dest=/tmp/ mode=0644 owner=root".format(script_name)
     tasks_list = [dict(action=dict(module="copy", args=copy_args))]
     return ansible_run_api(inventory_in=inventory_in, tasks_list=tasks_list, input_options=get_default_option(),
                            input_passwd_dict=dict(vault_pass='secret'), is_gather_facts=NOT_GATHER_FACTS)

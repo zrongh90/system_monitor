@@ -118,14 +118,14 @@ def get_filter_system(inventory_filter=None, os_filter=None):
         inventory_filter = request.args.get('inventory_filter')
         os_filter = request.args.get('os_filter')
         app.logger.debug("GET")
-    app.logger.debug("inventory_filter:" + inventory_filter)
-    app.logger.debug("os_filter:" + os_filter)
+    app.logger.debug("inventory_filter: {0}".format(inventory_filter))
+    app.logger.debug("os_filter: {0}".format(os_filter))
     page = request.args.get('page', 1, type=int)
     # 对结果进行分页
     if os_filter == "all":
-        paginate = System.query.filter(System.inventory.like("%" + inventory_filter + "%")).paginate(page, NUM_PER_PAGE)
+        paginate = System.query.filter(System.inventory.like("%{0}%".format(inventory_filter))).paginate(page, NUM_PER_PAGE)
     else:
-        paginate = System.query.filter(System.inventory.like("%" + inventory_filter + "%")). \
+        paginate = System.query.filter(System.inventory.like("%{0}%".format(inventory_filter))). \
             filter(System.os_info == str(os_filter)).paginate(page, NUM_PER_PAGE)
     systems = paginate.items
     for one_system in systems:
@@ -195,7 +195,7 @@ def deal_tivoli_condition(in_condition):
         return_host_ok = tivoli_ansible_run(tivoli_cmd)
         app.logger.debug(return_host_ok)
     if len(return_host_ok["stdout_lines"]) == 0:
-        flash("no record match event: " + in_condition, 'info')
+        flash("no record match event: {0} info".format(in_condition))
     else:
         for msg in return_host_ok["stdout_lines"]:
             flash(msg, 'success')
@@ -218,17 +218,17 @@ def clear_tivoli_alert(event_id=None, event_ip=None, event_content=None):
     if len(event_id):
         for one_id in event_id.split(','):
             if one_id.isdigit():
-                condition = " id " + str(one_id).strip()
+                condition = " id {0}".format(str(one_id).strip())
                 deal_tivoli_condition(condition)
             else:
-                flash("Alert ID: " + one_id + " not allow", 'error')
+                flash("Alert ID: {0} not allow".format(one_id), 'error')
     if len(event_ip):
         for one_ip in event_ip.split(','):
-            condition = " ip " + str(one_ip).strip()
+            condition = " ip {0}".format(str(one_ip).strip())
             deal_tivoli_condition(condition)
     if len(event_content):
         for one_content in event_content.split(','):
-            condition = " content \"" + str(one_content).strip() + "\""
+            condition = " content \"{0}\"".format(str(one_content).strip())
             deal_tivoli_condition(condition)
     return redirect(url_for('tivoli'))
 
@@ -239,7 +239,7 @@ def jquery_get_was_info():
     # input: invent_val
     # return: serialized WebSphere Object
     inventory_input = request.args.get('invent_val', 0, type=str)
-    app.logger.debug("inventory_input:" + inventory_input)
+    app.logger.debug("inventory_input: {0}".format(inventory_input))
     was_detail = WebSphere.query.filter_by(sys_inventory=inventory_input)
     return jsonify(result=[i.serialize for i in was_detail.all()])
 
@@ -250,7 +250,7 @@ def jquery_get_db2_info():
     # input: invent_val
     # return: serialized DB2 Object
     inventory_input = request.args.get('invent_val', None, type=str)
-    app.logger.debug("inventory_input:" + inventory_input)
+    app.logger.debug("inventory_input: {0}".format(inventory_input))
     db2_detail = DB2.query.filter_by(sys_inventory=inventory_input)
     return jsonify(result=[i.serialize for i in db2_detail.all()])
 
@@ -264,7 +264,7 @@ def jquery_collect_system(sys_inven=None):
     """
     app.logger.debug("into system perf collect!")
     sys_inven = request.args.get('sys_inven', None, type=str)
-    app.logger.debug("do with inventory:" + sys_inven)
+    app.logger.debug("do with inventory: {0}".format(sys_inven))
     perf_result = {}
     if PRODUCT:
         perf_result = sys_perf_ansible_run(sys_inven)
@@ -286,8 +286,7 @@ def jquery_collect_db2(db_inven=None, db_name=None, inst_name=None):
     db_inven = request.args.get('db_inven', None, type=str)
     db_name = request.args.get('db_name', None, type=str)
     inst_name = request.args.get('inst_name', None, type=str)
-    db2_collect_cmd_str = "su - " + inst_name + " -c \"sh /zxyx/collect/get_db2_log.sh " + inst_name \
-                          + " \'\' " + db_name + "\""
+    db2_collect_cmd_str = "su - {0} -c \"sh /zxyx/collect/get_db2_log.sh {0} '' {1}\"".format(inst_name, db_name)
     app.logger.debug(db2_collect_cmd_str)
     collect_result = {}
     if PRODUCT:
@@ -310,7 +309,7 @@ def jquery_collect_was(was_inven=None, prf_name=None, srv_name=None):
     prf_name = request.args.get('prf_name', None, type=str)
     srv_name = request.args.get('srv_name', None, type=str)
 
-    was_collect_cmd = "python collect_jc.py "+ prf_name + ' ' + srv_name
+    was_collect_cmd = "python collect_jc.py {0} {1}".format(prf_name, srv_name)
     app.logger.debug(was_collect_cmd)
     collect_result = {}
     if PRODUCT:

@@ -22,7 +22,7 @@ def inventory_db2_ansible_update(db2_info_list=None, inventory=None):
         # 当前数据库中包含inventory对应的数据库名，只更新对应数据
         for curr_db in db2_detail:
             if curr_db.db_name == db_name_in:
-                app.logger.debug("update current db2 info for object id: " + str(curr_db.db2_info_id))
+                app.logger.debug("update current db2 info for object id: {0}".format(str(curr_db.db2_info_id)))
                 curr_db.inst_name = inst_name_in
                 curr_db.listen_port = int(listen_port_in)
                 update_only_flag = True
@@ -47,7 +47,7 @@ def inventory_was_ansible_update(was_info_list=None, inventory=None):
     was_detail = WebSphere.query.filter_by(sys_inventory=inventory).all()
     app.logger.debug("run into was info update 2")
     for one_was in was_info_list:
-        app.logger.debug("was detail upate")
+        app.logger.debug("was detail update")
         prf_name_in = one_was['prf_path'].strip()
         srv_name_in = one_was['srv_name'].strip()
         curr_mem_in = one_was['mem']
@@ -56,7 +56,7 @@ def inventory_was_ansible_update(was_info_list=None, inventory=None):
         # 当前数据库中包含该was信息，只更新其他数据
         for curr_was in was_detail:
             if prf_name_in == curr_was.prf_name and srv_name_in == curr_was.srv_name:
-                app.logger.debug("update current was info for object id:" + str(curr_was.was_info_id))
+                app.logger.debug("update current was info for object id: {0}".format(str(curr_was.was_info_id)))
                 curr_was.srv_name = srv_name_in
                 curr_was.max_mem = int(max_mem_in)
                 curr_was.curr_mem = float(curr_mem_in)
