@@ -309,7 +309,7 @@ def jquery_collect_was(was_inven=None, prf_name=None, srv_name=None):
     prf_name = request.args.get('prf_name', None, type=str)
     srv_name = request.args.get('srv_name', None, type=str)
 
-    was_collect_cmd = "python collect_jc.py {0} {1}".format(prf_name, srv_name)
+    was_collect_cmd = "sh /zxyx/utils/call_py_getjc.sh \'{0}\' {1}".format(prf_name, srv_name)
     app.logger.debug(was_collect_cmd)
     collect_result = {}
     if PRODUCT:
