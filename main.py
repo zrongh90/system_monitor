@@ -7,11 +7,14 @@ import logging.handlers
 # from ansible_modules import ansible_collect
 from modules import System, WebSphere, DB2, app, db
 from utils import detail_update
-
+import platform
 
 NUM_PER_PAGE = 11
 LOG_FILE = 'main.log'
-PRODUCT = False
+if "windows" == platform.system().lower():
+    PRODUCT = False
+else:
+    PRODUCT = True
 # from ansible_modules import ansible_run
 if PRODUCT:
     from ansible_modules import tivoli_ansible_run, details_ansible_run, ansible_collect, script_issue_ansible_run, \

@@ -102,7 +102,7 @@ def detail_update(sys_obj, details_host_ok):
         if was_json["status"] == "success":
             app.logger.debug(details_host_ok["host"])
             inventory_was_ansible_update(was_json["msg"], details_host_ok["host"].name)
-            db2_json = json.loads(one_component_dict["db2"])
+        db2_json = json.loads(one_component_dict["db2"])
         if db2_json["status"] == "success":
             inventory_db2_ansible_update(db2_json["msg"], details_host_ok["host"].name)
     ansible_facts = details_host_ok["ansible_facts"]
