@@ -1,4 +1,4 @@
-# -*- coding: UTF-8 -*-
+#-*- coding: UTF-8 -*-
 from flask import render_template, request, jsonify, url_for, flash
 from sqlalchemy import distinct
 from werkzeug.utils import redirect
@@ -6,15 +6,17 @@ from time import sleep
 import logging.handlers
 # from ansible_modules import ansible_collect
 from modules import System, WebSphere, DB2, app, db
-from utils import detail_update
-import platform
+from utils import detail_update, get_title
+from platform import system
+import sys
 
 NUM_PER_PAGE = 11
 LOG_FILE = 'main.log'
-if "windows" == platform.system().lower():
+if "windows" == system().lower():
     PRODUCT = False
 else:
     PRODUCT = True
+
 # from ansible_modules import ansible_run
 if PRODUCT:
     from ansible_modules import tivoli_ansible_run, details_ansible_run, ansible_collect, script_issue_ansible_run, \
@@ -28,7 +30,6 @@ def init_log():
     handler.setFormatter(formatter)
     handler.setLevel(logging.DEBUG)
     app.logger.addHandler(handler)
-
 
 @app.errorhandler(404)
 def page_not_found(error):
@@ -66,8 +67,7 @@ def get_all_system():
         sys_was_count_list.append(sys_was_count)
         sys_db2_count_list.append(sys_db2_count)
     db.session.close()
-
-    return render_template("all_system.html", inventory_filter_val="", title="主机信息列表", system_list=systems,
+    return render_template("all_system.html", inventory_filter_val="", title=get_title("主机信息列表"), system_list=systems,
                            pagination=paginate, os_filter_val="", os_list_val=get_os_list(),
                            sys_was_count_list=sys_was_count_list, sys_db2_count_list=sys_db2_count_list)
 
@@ -83,7 +83,7 @@ def get_all_websphere(page=None):
     page = request.args.get('page', 1, type=int)
     paginate = db.session.query(WebSphere, System).join(System).order_by(System.inventory).paginate(page, NUM_PER_PAGE)
     was_list_in = paginate.items
-    return render_template("all_websphere.html", title="WebSphere中间件信息列表",
+    return render_template("all_websphere.html", title=get_title("WebSphere信息列表"),
                            pagination=paginate, was_list=was_list_in)
 
 
@@ -98,7 +98,7 @@ def get_all_db2(page=None):
     page = request.args.get('page', 1, type=int)
     paginate = db.session.query(DB2, System).join(System).paginate(page, NUM_PER_PAGE)
     db2_list_in = paginate.items
-    return render_template("all_db2.html", title="DB2信息列表",
+    return render_template("all_db2.html", title=get_title("DB2信息列表"),
                            pagination=paginate, db2_list=db2_list_in)
 
 
@@ -138,7 +138,7 @@ def get_filter_system(inventory_filter=None, os_filter=None):
         sys_db2_count_list.append(sys_db2_count)
     db.session.close()
     app.logger.debug(systems)
-    return render_template("all_system.html", inventory_filter_val=inventory_filter, title="主机信息列表",
+    return render_template("all_system.html", inventory_filter_val=inventory_filter, title=get_title("主机信息列表"),
                            system_list=systems, pagination=paginate, os_filter_val=os_filter, os_list_val=get_os_list(),
                            sys_was_count_list=sys_was_count_list, sys_db2_count_list=sys_db2_count_list)
 
@@ -169,7 +169,7 @@ def detail(inventory=None):
         # app.logger.debug(details_host_ok)
         new_was_detail = WebSphere.query.filter_by(sys_inventory=inventory).all()
         new_db2_detail = DB2.query.filter_by(sys_inventory=inventory).all()
-        return render_template("details.html", title="具体信息", system_detail_in=system_detail,
+        return render_template("details.html", title=get_title("具体信息"), system_detail_in=system_detail,
                                was_detail_in=new_was_detail,
                                db2_detail_in=new_db2_detail)
     except Exception as e:
@@ -270,7 +270,8 @@ def jquery_collect_system(sys_inven=None):
     app.logger.debug("do with inventory: {0}".format(sys_inven))
     perf_result = {}
     if PRODUCT:
-        perf_result = sys_perf_ansible_run(sys_inven)
+        # perf_result = sys_perf_ansible_run(sys_inven)
+        perf_result["stdout_lines"] = [u'test', u'test2']
     else:
         perf_result["stdout_lines"] = [u'test', u'test2']
     return jsonify(result='\n'.join(perf_result["stdout_lines"]))
@@ -317,16 +318,18 @@ def jquery_collect_was(was_inven=None, prf_name=None, srv_name=None):
     collect_result = {}
     if PRODUCT:
         collect_result = ansible_collect(inventory_in=was_inven, collect_cmd_str=was_collect_cmd)
+        #collect_result["stdout_lines"] = ["test1", "test2"]
     else:
         collect_result["stdout_lines"] = ["test1", "test2"]
     return jsonify(result='\n'.join(collect_result["stdout_lines"]))
 
 
 if __name__ == '__main__':
-    app.debug = True
+    #app.debug = True
     init_log()
     if PRODUCT:
         import sys
         reload(sys)
-        sys.setdefaultencoding('utf8')
+        sys.setdefaultencoding('utf-8')
+        default_encoding = sys.getdefaultencoding()
     app.run(host='0.0.0.0')

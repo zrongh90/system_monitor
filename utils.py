@@ -1,6 +1,12 @@
 # -*- coding: UTF-8 -*-
 from modules import db, System, WebSphere, DB2, app
 import json
+import sys
+
+if sys.version > '3':
+    PY3 = True
+else:
+    PY3 = False
 
 
 def inventory_db2_ansible_update(db2_info_list=None, inventory=None):
@@ -108,3 +114,10 @@ def detail_update(sys_obj, details_host_ok):
     ansible_facts = details_host_ok["ansible_facts"]
     app.logger.debug(sys_obj)
     inventory_sys_ansible_update(sys_obj, ansible_facts)
+
+
+def get_title(in_title):
+    my_title = in_title
+    if not PY3:
+        my_title = in_title.decode("utf-8")
+    return my_title
